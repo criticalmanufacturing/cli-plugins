@@ -1,0 +1,10 @@
+bin/
+obj/
+*.user
+.vs/
+node_modules/
+dist/
+npm/dist/
+npm/packs/
+package-lock.json
+npm/package-lock.json

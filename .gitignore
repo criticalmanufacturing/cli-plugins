@@ -1,0 +1,13 @@
+**/bin/
+**/obj/
+**/node_modules/
+**/TestResults/
+**/dist/
+**/npm/packs/
+**/nupkg/
+.vs/
+*.user
+*.nupkg
+*.snupkg
+npm-debug.log*
+.npmrc
