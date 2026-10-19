@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.9.0" />
+    <PackageReference Include="NJsonSchema" Version="11.6.1" />
     <PackageReference Include="coverlet.collector" Version="6.0.2">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -22,6 +23,11 @@
 
   <ItemGroup>
     <ProjectReference Include="..\src\cmf-codereview.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Offline copy of the official SARIF 2.1.0 schema for report validation. -->
+    <None Update="Fixtures/sarif-schema-2.1.0.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>
