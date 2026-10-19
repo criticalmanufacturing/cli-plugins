@@ -57,6 +57,24 @@ Notes:
 - Comments and trailing commas are allowed in the file.
 - A malformed file fails the scan with a clear error rather than being silently ignored.
 
+## Process Rule checks
+
+Process Rule validation uses the same `rules` dictionary as every other built-in check:
+
+```json
+{
+  "rules": {
+    "ProcessRuleCondition": { "severity": "Critical" },
+    "ProcessRuleUnresolvedGuard": { "enabled": false }
+  }
+}
+```
+
+There is no `guidelinesPath` or policy-file configuration. The Markdown authoring guidelines
+inform the C# implementation only; they are not loaded during scans. See
+[rules.md](rules.md#process-rule-deployment-validation) for diagnostic IDs and supported patterns.
+Each diagnostic can also be suppressed inline or accepted in the normal baseline.
+
 ## Inline suppression comments
 
 ```csharp
