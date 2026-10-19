@@ -7,6 +7,8 @@ using Cmf.Cli.Plugin.CodeReview.Enums;
 
 namespace Cmf.Cli.Plugin.CodeReview;
 
+internal record DataPackageContent(string Directory, string ContentType, string Source, int Order);
+
 /// <summary>Resolves default folder roots and scope labels, and enumerates .cs files to scan under the repository.</summary>
 public static class CodeReviewPaths
 {
@@ -58,6 +60,17 @@ public static class CodeReviewPaths
         };
     }
 
+    internal static IEnumerable<DataPackageContent> DiscoverDataPackageContent(string repositoryRoot) =>
+        FindAndParseManifests(repositoryRoot)
+            .Where(m => string.Equals(m.PackageType, "Data", StringComparison.OrdinalIgnoreCase))
+            .OrderBy(m => m.Directory, StringComparer.Ordinal)
+            .SelectMany(m => m.ContentToPack.Select((c, order) => new DataPackageContent(m.Directory, c.ContentType, c.Source, order)));
+
+    internal static bool IsProcessRuleContent(string contentType) =>
+        contentType.Equals("EntityTypes", StringComparison.OrdinalIgnoreCase) ||
+        contentType.Equals("ProcessRulesPre", StringComparison.OrdinalIgnoreCase) ||
+        contentType.Equals("ProcessRulesPost", StringComparison.OrdinalIgnoreCase);
+
     private static ResolvedRoots Discover(string repositoryRoot)
     {
         var fullRoot = Path.GetFullPath(repositoryRoot);
@@ -100,12 +113,17 @@ public static class CodeReviewPaths
         var deeRoots = manifests
             .Where(m => string.Equals(m.PackageType, "Data", StringComparison.OrdinalIgnoreCase))
             .SelectMany(m => m.ContentToPack
-                .Where(c => string.Equals(c.ContentType, "DEE", StringComparison.OrdinalIgnoreCase))
+                .Where(c => string.Equals(c.ContentType, "DEE", StringComparison.OrdinalIgnoreCase) || IsProcessRuleContent(c.ContentType))
                 .Select(c => Path.Combine(m.Directory, ExtractLiteralDirectory(c.Source)))
                 .Where(Directory.Exists))
             .Select(dir => GetRelativePath(fullRepositoryRoot, dir))
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToArray();
+
+        // A DEE root often already contains its Process Rule roots. Do not scan those files twice.
+        deeRoots = deeRoots.Where(root => !deeRoots.Any(other =>
+            !other.Equals(root, StringComparison.OrdinalIgnoreCase) &&
+            root.StartsWith(other + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))).ToArray();
 
         if (orchestrationRoots.Length == 0 && deeRoots.Length == 0)
         {
@@ -146,7 +164,7 @@ public static class CodeReviewPaths
 
         foreach (var segment in normalized.Split('/', StringSplitOptions.RemoveEmptyEntries))
         {
-            if (segment.Contains('*') || segment.Contains('$'))
+            if (segment.Contains('*') || segment.Contains('?') || segment.Contains('$'))
             {
                 break;
             }
@@ -285,7 +303,7 @@ public static class CodeReviewPaths
             files.AddRange(Directory.EnumerateFiles(fullRoot, "*.cs", SearchOption.AllDirectories));
         }
 
-        return files;
+        return files.Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(f => f, StringComparer.Ordinal).ToList();
     }
 
     /// <summary>True if the file sits under a Business/&lt;Project&gt;.Orchestration folder, for any Cmf.&lt;Project&gt; naming.</summary>

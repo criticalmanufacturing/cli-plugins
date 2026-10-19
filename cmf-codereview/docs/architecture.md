@@ -234,3 +234,16 @@ loop/method-analyzed at most once no matter how many passes touch it.
 **Adding a rule** doesn't touch any of this. It's one more class implementing `IReviewRule` (or
 one more instantiation of `LoopSensitiveCallRule` / `EntityPropertyAccessRule` if the shape
 already fits), registered in `CmFrameworkScanner.Rules`. See [docs/rules.md](rules.md).
+
+## Process Rule deployment context
+
+`ProcessRuleValidationRule` is registered with the normal built-in rules. After warming the
+shared syntax cache, the scanner builds one read-only `ProcessRuleRepositoryContext`: package
+content/phase/version classification, same-package MasterData schema changes, and resolvable
+entity-type creator/consumer ordering. `RuleFileContext` carries this context into the parallel
+rule loop; Process Rule detection reuses the cached Roslyn trees and yields ordinary `RuleMatch`
+values. Existing enrichment, configuration, suppression, baseline, and changed-file filters apply.
+
+Deployment metadata comes from repository source/package files. The Markdown authoring guidelines
+are implementation reference material and have no runtime role. No language model or policy
+interpreter is involved. Findings use the existing JSON, Markdown, and HTML outputs.

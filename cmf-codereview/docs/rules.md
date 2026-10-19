@@ -1,6 +1,6 @@
 # Rule Reference
 
-All 17 rules implemented by `CmFrameworkScanner.GetFindings`. When a finding's severity escalates, the
+Built-in checks implemented by `CmFrameworkScanner.GetFindings`. When a finding's severity escalates, the
 finding's JSON also carries a machine-readable `Escalation` object (base severity, reasons, nested-loop
 depth) — see [commands.md](commands.md#scan). Severity can escalate above the base level
 listed here for `LoadInsideLoop`, `ResolveInsideLoop`, `QueryExecuteInsideLoop`, `SaveInsideLoop`,
@@ -66,6 +66,64 @@ ad-hoc query pattern). See `EntityCatalog.NonLazyLoadedReferenceNames` /
 | `ApplicationContextInExtension` | Medium | An extension method file (`Extensions/` folder or `*Extensions.*` filename) references `ApplicationContext` | Pass required services into the caller, or move the logic into an injectable service. |
 | `DirectEntityInstantiation` | Medium | `new Material(`, `new Product(`, etc. — direct construction of a known entity type | Use `entityFactory.Create<TInterface>()` instead of direct construction. |
 | `GetConfigInsteadOfTryGetConfig` | Medium | A `GetConfig(` call that is not `TryGetConfig` and not `Config.GetConfig` (already covered by that rule) | Confirm whether this should use `TryGetConfig` or an existing wrapper service before keeping the direct call. |
+
+## Process Rule deployment validation
+
+`ProcessRuleValidationRule` implements deterministic Roslyn checks for `DeeDevBase` deployment
+classes. The authoring guidelines are development reference material: **the scanner never reads
+`process-rule-validation-guidelines.md`**. Identical source, package metadata, tool version, and
+review configuration produce identical findings. Changes to checks are C# changes with tests.
+
+Process Rules are discovered from Data-package `EntityTypes`, `ProcessRulesPre`, and
+`ProcessRulesPost` content entries, including repositories without a general `DEE` entry.
+Standard `DEEs/ProcessRules/` paths also work with explicit roots. Classification distinguishes
+versioned Before/After, EntityTypes, EntityTypesAttributes, and recurring unversioned Services.
+The older `IsOneTimeMigrationFile` exemptions remain unchanged for compatibility; that flag alone
+does not imply a Services rule runs once.
+
+| Diagnostic | Default severity | Detects / remediation |
+|---|---|---|
+| `ProcessRuleCondition` | High | Condition contains more than an unconditional `return true` / `=> true`. Deployment skips it; move guards into `DeeActionCode`. |
+| `ProcessRuleUnguardedMutation` | High; Critical when the same guard exists only in the skipped condition | Attribute creation or typed Action/Rule/Config/EntityType creation, deletion, removal, saving, action-group removal, or termination lacks a recognized guard for its own target. |
+| `ProcessRuleUnresolvedGuard` | Medium | Attribute target or a helper-based guard cannot be resolved. Review the helper rather than treating it as proven safe. |
+| `ProcessRuleTerminationState` | High | Termination lacks an already-terminated state guard. Check both existence and `UniversalState != Terminated`. |
+| `ProcessRuleSchemaRegeneration` | High | Raw property collection creation or `FullUpdateEntityType` property changes lack subsequent schema regeneration for the same entity on the same path. |
+| `ProcessRuleAttributeRemoval` | High; Critical when matching cleanup occurs after removal | A resolved property removal has no matching earlier `RemoveAttributes` cleanup. Clear all holders and preserve values where required before removing metadata. |
+| `ProcessRuleAttributeRemovalReview` | Medium | Removed properties are supplied through an unresolved collection/helper; verify guards and cleanup. |
+| `ProcessRuleTableMigration` | Critical | Smart/Generic Table data access or mutation targets schema created/changed in the same package version's MasterData. Move migration to a post-install step or later independent package. |
+| `ProcessRuleTableMigrationReview` | Medium | Table mutation has an unresolved name/package/version; verify deployment dependencies and rerun safety. |
+| `ProcessRulePlacement` | High | Unsupported folder, conflicting namespace phase/content type, wrong position relative to MasterData, or attribute changes in a general Before/After folder. |
+| `ProcessRuleVersionNamespace` | Medium | Namespace version does not match the dotted folder version's underscore form. |
+| `ProcessRuleRecurringMigration` | Medium | Recognizable migration mutations under Services will run on every deployment; confirm intent or move to a versioned folder. |
+| `ProcessRuleDependencyOrder` | High | A literal entity-type load precedes its unique same-package, same-version creation rule in manifest/alphabetical file order. Move the creator earlier. |
+
+Guards recognize `HasProperty`, `TryGetEntityTypeProperty`, `ObjectExists`, `TryLoad`, boolean
+negation/comparisons, applicable branches, and early returns. Checks on another property or target
+do not protect an operation. Reachable local functions are analyzed, including guards at their
+call sites; dormant local functions and callbacks are excluded. Raw metadata changes recognize
+`GenerateSchema` and `GenerateEntityTypeDBSchema` after the update. The normal
+`IMicronEntityTypeService.UpdateEntityTypeProperties` route does not require a duplicate schema
+call. A guarded removal followed by recreation supports deliberate attribute-definition repairs;
+the removal still needs value cleanup.
+
+Schema context is read once per scan from the same Data package's versioned MasterData. It tracks
+new Smart/Generic Tables and changes to property structure. Row data, precedence keys, and
+description-only updates are not schema changes. Partial property updates retain earlier field
+definitions. Names must resolve from local/constant strings, a table's `Name`, or a named `Load`;
+unrelated packages' tables are never correlated. Unchanged files provide context even when
+`--changed-files-list` restricts the reported findings.
+
+These are bounded syntax checks, not execution or whole-program proofs. External helpers,
+callbacks, indirect SQL/query table dependencies, and arbitrary alias/data flow may require
+review. Cleanup recognition does not prove a query included every populated holder. Rename/move
+value preservation is a developer decision; verify copies finish before cleanup. Released-version
+immutability, database execution twice, complete test coverage, and manual release-note steps
+need release/deployment evidence and are not inferred from folder age or missing static findings.
+Do not edit shipped rules to resolve historical findings: fix forward, or baseline accepted debt.
+
+All diagnostics use the existing per-rule settings, inline suppressions, baselines, changed-file
+filtering, severity gates, and JSON/Markdown/HTML reporting. They do not use loop escalation.
+
 
 ## The entity catalog (`src/Rules/EntityCatalog.cs`)
 
