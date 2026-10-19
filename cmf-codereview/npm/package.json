@@ -1,0 +1,45 @@
+{
+  "name": "@criticalmanufacturing/codereview",
+  "version": "1.0.0-alpha",
+  "description": "Critical Manufacturing CLI plugin: static analysis for CM Framework DEE/Orchestration code",
+  "bin": {
+    "cmf-codereview": "./run.js"
+  },
+  "keywords": [
+    "cmf",
+    "cmf-cli",
+    "cmf-codereview",
+    "cmf-cli-plugin"
+  ],
+  "scripts": {
+    "postinstall": "node postinstall.js install",
+    "preuninstall": "node postinstall.js uninstall"
+  },
+  "author": "Critical Manufacturing, SA",
+  "license": "BSD-3-Clause",
+  "goBinary": {
+    "name": "cmf-codereview",
+    "path": "./bin"
+  },
+  "homepage": "https://github.com/criticalmanufacturing/cli-plugins/tree/main/cmf-codereview#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/criticalmanufacturing/cli-plugins.git",
+    "directory": "cmf-codereview"
+  },
+  "files": [
+    "dist",
+    "postinstall.js",
+    "run.js",
+    "utils.js"
+  ],
+  "dependencies": {
+    "debug": "^4.4.3",
+    "mkdirp": "^3.0.1",
+    "node_modules-path": "^2.3.0",
+    "rimraf": "^6.1.3"
+  },
+  "publishConfig": {
+    "registry": "https://cm-collaborationhub.io/api/npm/2305290000030000002/dev/"
+  }
+}
