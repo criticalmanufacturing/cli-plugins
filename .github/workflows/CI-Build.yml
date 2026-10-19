@@ -1,0 +1,36 @@
+name: CI-Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: cmf-codereview
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up .NET 8
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore dependencies of cmf-codereviewer
+        run: dotnet restore cmf-codereview.sln
+
+      - name: Build cmf-codereviewer
+        run: dotnet build cmf-codereview.sln --configuration Release --no-restore
+
+      - name: Run tests on cmf-codereviewer
+        run: dotnet test cmf-codereview.sln --configuration Release --no-build
