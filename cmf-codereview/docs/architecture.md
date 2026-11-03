@@ -92,8 +92,9 @@ means a parallel scan and a sequential one produce byte-identical output — par
 wall-clock time, never the result. Run with `CODEREVIEW_PROFILE=1` to see each phase's own timing on stderr.
 
 `ReviewCommand` follows the same path and then hands the findings straight to
-`ReportCommand.Build`, which renders either Markdown or a self-contained HTML page
-(`--report-format`, via `CmReportGenerator` / `CmHtmlReportGenerator`).
+`ReportCommand.Build`, which renders Markdown, a self-contained HTML page, or SARIF 2.1.0
+(`--report-format`, via `CmReportGenerator` / `CmHtmlReportGenerator` / `CmSarifReportGenerator`).
+The scan command can also render findings directly as SARIF while keeping JSON as its default.
 
 ## 03 · The rule engine
 

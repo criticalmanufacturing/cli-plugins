@@ -7,8 +7,8 @@ using Cmf.Cli.Plugin.CodeReview.Enums;
 
 namespace Cmf.Cli.Plugin.CodeReview.Commands;
 
-/// <summary>cmf-codereview review — one-shot: scan the code and write both a findings JSON and a Markdown report.</summary>
-[CmfCommand("review", Description = "One-shot: scan the code and write both a findings JSON and a Markdown report.")]
+/// <summary>cmf-codereview review — one-shot: scan the code and write findings JSON and a Markdown, HTML, or SARIF report.</summary>
+[CmfCommand("review", Description = "One-shot: scan the code and write findings JSON and a Markdown, HTML, or SARIF report.")]
 public class ReviewCommand : BaseCommand
 {
     public override void Configure(Command cmd)
@@ -19,7 +19,7 @@ public class ReviewCommand : BaseCommand
         var findingsPathOption = new Option<string?>("--findings-path", "Where to write the intermediate findings JSON");
         var reportPathOption = new Option<string?>("--report-path", "Output path for the report");
         var reportModeOption = new Option<ReportMode>("--report-mode", () => ReportMode.Standard, "Standard or Detailed report shape");
-        var reportFormatOption = new Option<ReportFormat>("--report-format", () => ReportFormat.Markdown, "Markdown (portable, for PR comments) or Html (self-contained, filterable page for browser triage)");
+        var reportFormatOption = new Option<ReportFormat>("--report-format", () => ReportFormat.Markdown, "Markdown (portable, for PR comments), Html (self-contained browser report), or Sarif (SARIF 2.1.0 log)");
         var titleOption = new Option<string>("--title", () => ReportCommand.DefaultTitle, "Report title");
         var summaryOption = new Option<string>("--summary", () => ReportCommand.DefaultSummary, "Report summary line");
 

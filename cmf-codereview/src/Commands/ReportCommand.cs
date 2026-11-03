@@ -10,8 +10,8 @@ using Cmf.Cli.Plugin.CodeReview.Enums;
 
 namespace Cmf.Cli.Plugin.CodeReview.Commands;
 
-/// <summary>cmf-codereview report — renders a Markdown report from a findings JSON file.</summary>
-[CmfCommand("report", Description = "Render a Markdown report from a findings JSON file.")]
+/// <summary>cmf-codereview report — renders a Markdown, HTML, or SARIF report from findings JSON.</summary>
+[CmfCommand("report", Description = "Render a Markdown, HTML, or SARIF report from a findings JSON file.")]
 public class ReportCommand : BaseCommand
 {
     public const string DefaultTitle = "C# Code Review for CM Framework Scan";
@@ -23,7 +23,7 @@ public class ReportCommand : BaseCommand
         var repositoryRootOption = new Option<string?>("--repository-root", "Repository root, used only to default --report-path");
         var reportPathOption = new Option<string?>("--report-path", "Output path for the report; defaults to Tools/CodeReview/Reports/cm-framework-scan-<mode>-<timestamp>.md under --repository-root");
         var reportModeOption = new Option<ReportMode>("--report-mode", () => ReportMode.Standard, "Standard (severity-grouped) or Detailed (rule backlog) report shape");
-        var reportFormatOption = new Option<ReportFormat>("--report-format", () => ReportFormat.Markdown, "Markdown (portable, for PR comments) or Html (self-contained, filterable page for browser triage)");
+        var reportFormatOption = new Option<ReportFormat>("--report-format", () => ReportFormat.Markdown, "Markdown (portable, for PR comments), Html (self-contained browser report), or Sarif (SARIF 2.1.0 log)");
         var titleOption = new Option<string>("--title", () => DefaultTitle, "Report title");
         var summaryOption = new Option<string>("--summary", () => DefaultSummary, "Report summary line");
         var stdoutOption = new Option<bool>("--stdout", "Print the report to stdout instead of writing a file (e.g. for piping into a PR comment). No file is created when this is set.");
@@ -67,8 +67,10 @@ public class ReportCommand : BaseCommand
         return (reportMode, reportFormat) switch
         {
             (ReportMode.Detailed, ReportFormat.Html) => CmHtmlReportGenerator.BuildDetailedReport(findings, title, summary),
+            (ReportMode.Detailed, ReportFormat.Sarif) => CmSarifReportGenerator.BuildDetailedReport(findings, title, summary),
             (ReportMode.Detailed, _) => CmReportGenerator.BuildDetailedReport(findings, title, summary),
             (_, ReportFormat.Html) => CmHtmlReportGenerator.BuildStandardReport(findings, title, summary),
+            (_, ReportFormat.Sarif) => CmSarifReportGenerator.BuildStandardReport(findings, title, summary),
             _ => CmReportGenerator.BuildStandardReport(findings, title, summary)
         };
     }
@@ -84,7 +86,12 @@ public class ReportCommand : BaseCommand
             var reportDirectory = CodeReviewPaths.GetDefaultReportsDirectory(root);
             Directory.CreateDirectory(reportDirectory);
             var suffix = reportMode == ReportMode.Detailed ? "detailed" : "standard";
-            var extension = reportFormat == ReportFormat.Html ? "html" : "md";
+            var extension = reportFormat switch
+            {
+                ReportFormat.Html => "html",
+                ReportFormat.Sarif => "sarif",
+                _ => "md"
+            };
             var timestamp = DateTime.Now.ToString("yyyyMMdd-HHmmss");
             reportPath = Path.Combine(reportDirectory, $"cm-framework-scan-{suffix}-{timestamp}.{extension}");
         }

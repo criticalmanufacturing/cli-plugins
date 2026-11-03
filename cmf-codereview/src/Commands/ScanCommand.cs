@@ -6,8 +6,8 @@ using Cmf.Cli.Plugin.CodeReview.Enums;
 
 namespace Cmf.Cli.Plugin.CodeReview.Commands;
 
-/// <summary>cmf-codereview scan — runs the review engine and prints/saves findings as JSON.</summary>
-[CmfCommand("scan", Description = "Scan code and print (and optionally save) findings as JSON.")]
+/// <summary>cmf-codereview scan — runs the review engine and prints/saves findings as JSON or SARIF.</summary>
+[CmfCommand("scan", Description = "Scan code and print (and optionally save) findings as JSON or SARIF.")]
 public class ScanCommand : BaseCommand
 {
     public override void Configure(Command cmd)
@@ -21,7 +21,7 @@ public class ScanCommand : BaseCommand
         {
             AllowMultipleArgumentsPerToken = true
         };
-        var outputOption = new Option<string?>("--output", description: "Path to write findings as JSON");
+        var outputOption = new Option<string?>("--output", description: "Path to write findings in the selected format");
         var changedFilesListOption = new Option<string?>("--changed-files-list", description:
             "Path to a text file listing changed files (one relative or absolute path per line, e.g. from 'git diff --name-only'). " +
             "When given, only findings on those files are reported, though the whole repository is still analyzed for cross-reference/loop-exposure context.");
@@ -31,6 +31,18 @@ public class ScanCommand : BaseCommand
             "Write all current findings (ignoring any existing baseline) to .codereview.baseline.json at the repository root, accepting them as known debt — " +
             "subsequent scans only report findings not in the baseline. Always exits 0.");
 
+        var reportFormatOption = new Option<string>("--report-format", () => "Json", "Findings output format: Json (default) or Sarif");
+        reportFormatOption.AddValidator(result =>
+        {
+            var value = result.GetValueForOption(reportFormatOption);
+            if (value is not null &&
+                !value.Equals("json", StringComparison.OrdinalIgnoreCase) &&
+                !value.Equals("sarif", StringComparison.OrdinalIgnoreCase))
+            {
+                result.ErrorMessage = $"--report-format must be Json or Sarif. Value received: '{value}'.";
+            }
+        });
+
         cmd.AddOption(repositoryRootOption);
         cmd.AddOption(scopeOption);
         cmd.AddOption(rootsOption);
@@ -38,11 +50,12 @@ public class ScanCommand : BaseCommand
         cmd.AddOption(changedFilesListOption);
         cmd.AddOption(failOnOption);
         cmd.AddOption(updateBaselineOption);
+        cmd.AddOption(reportFormatOption);
 
-        cmd.Handler = CommandHandler.Create<string, ReviewScope, string[], string?, string?, Severity?, bool>(Execute);
+        cmd.Handler = CommandHandler.Create<string, ReviewScope, string[], string?, string?, Severity?, bool, string?>(Execute);
     }
 
-    public int Execute(string repositoryRoot, ReviewScope scope, string[] roots, string? output, string? changedFilesList, Severity? failOn, bool updateBaseline)
+    public int Execute(string repositoryRoot, ReviewScope scope, string[] roots, string? output, string? changedFilesList, Severity? failOn, bool updateBaseline, string? reportFormat = null)
     {
         var effectiveRoots = roots is { Length: > 0 } ? roots : CodeReviewPaths.ResolveRoots(repositoryRoot, scope);
         var changedFiles = string.IsNullOrWhiteSpace(changedFilesList)
@@ -59,7 +72,9 @@ public class ScanCommand : BaseCommand
             Console.Error.WriteLine($"Baseline written: {baselinePath} ({findings.Count} findings accepted)");
         }
 
-        var json = FindingsIo.Serialize(findings);
+        var json = reportFormat?.Equals("sarif", StringComparison.OrdinalIgnoreCase) == true
+            ? CmSarifReportGenerator.BuildStandardReport(findings, ReportCommand.DefaultTitle, ReportCommand.DefaultSummary)
+            : FindingsIo.Serialize(findings);
 
         if (!string.IsNullOrWhiteSpace(output))
         {

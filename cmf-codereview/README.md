@@ -3,7 +3,8 @@
 `cmf-codereview` is a static analysis CLI for CM Framework (Critical Manufacturing) customization code. It
 scans DEE and Orchestration C# code for performance/correctness anti-patterns — loads inside loops,
 excessive lazy loading, config misuse, direct entity instantiation, and more — and produces a report
-(Markdown or a self-contained HTML page) grouped by severity or by rule. The folders to scan are
+(Markdown, a self-contained HTML page, or SARIF 2.1.0). Markdown/HTML group findings by severity or rule.
+The folders to scan are
 discovered from the repository's own `cmfpackage.json` package manifests, so it works with any
 customization project name (`Cmf.Custom.*`, `Cmf.Semi.*`, ...), not a hardcoded layout.
 
@@ -75,7 +76,8 @@ baseline (`scan --update-baseline`) so CI gates only fail on new findings. See
   as `cmf-dev`/`cmf-pipeline`), wiring `scan`/`report`/`review` under `Commands/`, plus the scanning
   engine it calls into: `Analysis/` (syntax-tree analyzers), `Rules/` (the rule engine, including the
   reflection-based `EntityCatalogResolver`), `Models/`, `Enums/`, and the report renderers
-  (`CmReportGenerator.cs` for Markdown, `CmHtmlReportGenerator.cs` for HTML).
+  (`CmReportGenerator.cs` for Markdown, `CmHtmlReportGenerator.cs` for HTML, and
+  `CmSarifReportGenerator.cs` for SARIF).
 - `tests/` — xUnit tests, referencing `src/cmf-codereview.csproj` directly.
 - `npm/` — the npm package (`package.json` with `bin`/`goBinary`, `postinstall.js`, `run.js`, `utils.js`)
   that wraps the self-contained per-OS binaries for distribution as a CM CLI plugin.
