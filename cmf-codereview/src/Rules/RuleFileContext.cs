@@ -10,6 +10,7 @@ namespace Cmf.Cli.Plugin.CodeReview.Rules;
 public class RuleFileContext
 {
     public required CompilationUnitSyntax Root { get; init; }
+    public string FilePath { get; init; } = "";
     public required IReadOnlyList<string> Lines { get; init; }
     public required LoopState LoopState { get; init; }
     public required List<MethodRange> MethodRanges { get; init; }
@@ -80,6 +81,7 @@ public class RuleFileContext
         return new RuleFileContext
         {
             Root = root,
+            FilePath = file,
             Lines = lines,
             LoopState = loopState,
             MethodRanges = methodRanges,

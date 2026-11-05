@@ -1,6 +1,6 @@
 # Rule Reference
 
-All 17 rules implemented by `CmFrameworkScanner.GetFindings`. When a finding's severity escalates, the
+Built-in checks implemented by `CmFrameworkScanner.GetFindings`. When a finding's severity escalates, the
 finding's JSON also carries a machine-readable `Escalation` object (base severity, reasons, nested-loop
 depth) — see [commands.md](commands.md#scan). Severity can escalate above the base level
 listed here for `LoadInsideLoop`, `ResolveInsideLoop`, `QueryExecuteInsideLoop`, `SaveInsideLoop`,
@@ -137,3 +137,9 @@ carry the reverse link (`CalledByDee`). Findings flagged via `LoopInducedByCalle
 same reason) carry a `LoopExposure` chain describing the call path back to the loop that causes the
 repetition — rendered as prose by `CmLoopExposureFinder.FormatChain` and included in both the Standard and
 Detailed reports.
+
+## DEE references and deployment versions
+
+The reference checks and PR deployment-folder diagnostics are described in
+[pr-validation.md](pr-validation.md), including their default severities, required metadata,
+historical-folder exclusions, and CLI/pipeline inputs.

@@ -100,14 +100,15 @@ public static class CodeReviewPaths
         var deeRoots = manifests
             .Where(m => string.Equals(m.PackageType, "Data", StringComparison.OrdinalIgnoreCase))
             .SelectMany(m => m.ContentToPack
-                .Where(c => string.Equals(c.ContentType, "DEE", StringComparison.OrdinalIgnoreCase))
+                .Where(c => new[] { "DEE", "EntityTypes", "ProcessRulesPre", "ProcessRulesPost" }.Contains(c.ContentType, StringComparer.OrdinalIgnoreCase))
                 .Select(c => Path.Combine(m.Directory, ExtractLiteralDirectory(c.Source)))
                 .Where(Directory.Exists))
             .Select(dir => GetRelativePath(fullRepositoryRoot, dir))
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToArray();
 
-        if (orchestrationRoots.Length == 0 && deeRoots.Length == 0)
+        if (orchestrationRoots.Length == 0 && deeRoots.Length == 0 &&
+            !manifests.Any(m => string.Equals(m.PackageType, "Data", StringComparison.OrdinalIgnoreCase)))
         {
             throw new CliException(
                 $"No cmfpackage.json under '{fullRepositoryRoot}' resolves to a Business or Data package " +
@@ -285,7 +286,7 @@ public static class CodeReviewPaths
             files.AddRange(Directory.EnumerateFiles(fullRoot, "*.cs", SearchOption.AllDirectories));
         }
 
-        return files;
+        return files.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
     }
 
     /// <summary>True if the file sits under a Business/&lt;Project&gt;.Orchestration folder, for any Cmf.&lt;Project&gt; naming.</summary>
