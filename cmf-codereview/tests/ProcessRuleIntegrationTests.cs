@@ -109,6 +109,29 @@ public sealed class ProcessRuleIntegrationTests : IDisposable
         Assert.Contains("ProcessRuleUnguardedMutation", ReportCommand.BuildContent(path, ReportMode.Detailed, ReportFormat.Html, "Review", "Summary"));
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void DependencyIndex_MissingFileDoesNotPreventIndexingOtherRules(bool supplyCache)
+    {
+        var missing = Write("DEEs/ProcessRules/2.59.0/Before/AUnavailable.cs",
+            ProcessRuleValidationTests.Source("", ns: "_2_59_0.Before"));
+        var consumer = Write("DEEs/ProcessRules/2.59.0/Before/BConsumer.cs",
+            ProcessRuleValidationTests.Source("var entity = service.LoadEntityType(\"CustomNewEntity\");", ns: "_2_59_0.Before"));
+        var creator = Write("DEEs/ProcessRules/2.59.0/Before/CCreator.cs",
+            ProcessRuleValidationTests.Source("IEntityType entity = provider.GetService<IEntityType>(); entity.Name = \"CustomNewEntity\"; if (!entity.ObjectExists()) entity.Create();", ns: "_2_59_0.Before"));
+        // A file discovered earlier can disappear before dependency indexing reads it.
+        File.Delete(missing);
+
+        var context = ProcessRuleRepositoryContext.Build(_root, [missing, consumer, creator],
+            supplyCache ? new CodeReviewFileCache() : null);
+
+        var problem = Assert.Single(context.GetOrderProblems(consumer));
+        Assert.Contains("CustomNewEntity", problem);
+        Assert.Contains("CCreator.cs", problem);
+        Assert.Empty(context.GetOrderProblems(creator));
+    }
+
     private const string TableWrite = """
         ISmartTable table = provider.GetService<ISmartTable>();
         const string TableName = "CustomTarget";

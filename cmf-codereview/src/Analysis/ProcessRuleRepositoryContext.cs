@@ -86,12 +86,13 @@ public sealed class ProcessRuleRepositoryContext
 
     private void IndexDependencies(string repositoryRoot, CodeReviewFileCache? fileCache)
     {
+        fileCache ??= new CodeReviewFileCache();
         var creators = new List<(string File, ProcessRuleInfo Info, string Entity)>();
         var consumers = new List<(string File, ProcessRuleInfo Info, string Entity)>();
         foreach (var (file, info) in _files.OrderBy(p => p.Key, StringComparer.Ordinal))
         {
             if (info.Version is null || info.PackageDirectory is null) continue;
-            var root = fileCache?.Get(file).Root ?? CodeReviewSyntaxTree.Parse(File.ReadAllText(file)).Root;
+            var root = fileCache.Get(file).Root;
             foreach (var @class in root.DescendantNodes().OfType<ClassDeclarationSyntax>()
                 .Where(c => c.BaseList?.Types.Any(t => CodeReviewSyntaxTree.LastIdentifierSegment(t.Type.ToString()) == "DeeDevBase") == true))
             {
