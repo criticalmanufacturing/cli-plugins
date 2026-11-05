@@ -17,6 +17,9 @@ public class RuleFileContext
     public required bool IsOrchestrationFile { get; init; }
     public required bool IsDeeFile { get; init; }
     public required bool IsOneTimeMigrationFile { get; init; }
+    public ProcessRuleInfo? ProcessRule { get; init; }
+    public ProcessRuleRepositoryContext? ProcessRuleRepository { get; init; }
+    public IReadOnlyList<string> ProcessRuleOrderProblems { get; init; } = Array.Empty<string>();
     public required bool ContainsExtensionMethod { get; init; }
 
     /// <summary>The repository's reflection-resolved entity catalog, shared across every file's context in a scan.</summary>
@@ -58,11 +61,13 @@ public class RuleFileContext
     }
 
     /// <summary>Builds from a scan's shared per-file cache, reusing its parse and derived analyses instead of re-doing them.</summary>
-    public static RuleFileContext Build(CachedSourceFile source, MethodCallGraph callGraph, ConcurrentDictionary<string, LoopExposure?> loopExposureCache, EntityCatalog entityCatalog) =>
-        Build(source.Root, source.Lines, source.LoopState, source.MethodRanges, source.Path, callGraph, loopExposureCache, entityCatalog);
+    public static RuleFileContext Build(CachedSourceFile source, MethodCallGraph callGraph, ConcurrentDictionary<string, LoopExposure?> loopExposureCache, EntityCatalog entityCatalog,
+        ProcessRuleRepositoryContext? processRuleRepository = null) =>
+        Build(source.Root, source.Lines, source.LoopState, source.MethodRanges, source.Path, callGraph, loopExposureCache, entityCatalog, processRuleRepository);
 
     private static RuleFileContext Build(CompilationUnitSyntax root, IReadOnlyList<string> lines, LoopState loopState, List<MethodRange> methodRanges,
-        string file, MethodCallGraph callGraph, ConcurrentDictionary<string, LoopExposure?> loopExposureCache, EntityCatalog entityCatalog)
+        string file, MethodCallGraph callGraph, ConcurrentDictionary<string, LoopExposure?> loopExposureCache, EntityCatalog entityCatalog,
+        ProcessRuleRepositoryContext? processRuleRepository = null)
     {
         var isExtensionFile = CodeReviewPaths.IsExtensionFile(file);
         var isOrchestrationFile = CodeReviewPaths.IsOrchestrationFile(file);
@@ -87,6 +92,9 @@ public class RuleFileContext
             IsOrchestrationFile = isOrchestrationFile,
             IsDeeFile = isDeeFile,
             IsOneTimeMigrationFile = isOneTimeMigrationFile,
+            ProcessRule = processRuleRepository?.GetInfo(file) ?? ProcessRuleRepositoryContext.ClassifyPath(file),
+            ProcessRuleRepository = processRuleRepository,
+            ProcessRuleOrderProblems = processRuleRepository?.GetOrderProblems(file) ?? Array.Empty<string>(),
             ContainsExtensionMethod = containsExtensionMethod,
             EntityCatalog = entityCatalog,
             ConfigVarNames = configVarNames,
