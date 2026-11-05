@@ -94,3 +94,7 @@ baseline (`scan --update-baseline`) so CI gates only fail on new findings. See
 ```bash
 dotnet test
 ```
+
+## Releases
+
+See [the release guide](docs/Releases.md) for the GitHub Actions `next` candidate and approved `latest` promotion flow, required repository settings, and the Micron integration branch. Publication remains disabled until the RepoFlow upload limit is resolved.

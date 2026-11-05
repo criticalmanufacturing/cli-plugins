@@ -11,3 +11,4 @@
 *.snupkg
 npm-debug.log*
 .npmrc
+**/release/
