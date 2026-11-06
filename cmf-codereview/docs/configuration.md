@@ -173,3 +173,11 @@ Those are the two supported kinds; a pattern that fits neither needs a code rule
 `docs/rules.md` and `IReviewRule`) — or ask for the kind to be added.
 
 Commit `.codereview.json` alongside the code so every teammate and CI run enforces the same rules.
+
+## DEE references and deployment versions
+
+Use the normal `rules` dictionary to configure `DeeInvalidReference`, `DeeMissingReference`,
+`DeeReferenceUnresolved`, `DeploymentVersionMismatch`, and `DeploymentVersionUnresolved`.
+For example, `"DeeReferenceUnresolved": { "enabled": false }` disables only unresolved-reference
+review findings; it does not disable confirmed invalid or missing-reference findings.
+See [pr-validation.md](pr-validation.md) for the metadata and added-file inputs needed for validation.

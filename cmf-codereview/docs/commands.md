@@ -14,7 +14,7 @@ Runs the review engine over a repository and prints findings as a JSON array by 
 SARIF 2.1.0 log with `--report-format Sarif`. Optionally also saves the selected output to a file.
 
 ```bash
-cmf-codereview scan --repository-root <path> [--scope DEEs|Orchestration|Both] [--roots <rel1> <rel2> ...] [--output <file>] [--report-format Json|Sarif] [--changed-files-list <file>] [--fail-on Critical|High|Medium] [--update-baseline]
+cmf-codereview scan --repository-root <path> [--scope DEEs|Orchestration|Both] [--roots <rel1> <rel2> ...] [--output <file>] [--report-format Json|Sarif] [--changed-files-list <file>] [--added-files-list <file>] [--fail-on Critical|High|Medium] [--update-baseline]
 ```
 
 | Option | Required | Default | Description |
@@ -25,6 +25,7 @@ cmf-codereview scan --repository-root <path> [--scope DEEs|Orchestration|Both] [
 | `--output` | No | (none — stdout only) | Path to also write findings in the selected format to disk. Parent directories are created automatically. |
 | `--report-format` | No | `Json` | `Json` (findings array) or `Sarif` (SARIF 2.1.0). Values are case-insensitive. The selected format applies to stdout and `--output`. |
 | `--changed-files-list` | No | (none — reports on every scanned file) | Path to a text file listing changed files, one relative or absolute path per line (e.g. the output of `git diff --name-only`). When given, only findings on those files are returned — but the whole repository is still analyzed for cross-reference and loop-exposure context, so a finding on a changed file caused by an unchanged caller elsewhere is still correctly reported. Intended for CI gates that should only comment on files actually touched by a change. |
+| `--added-files-list` | No | (deployment version check skipped) | Added/renamed PR destinations, one path per line. Enables package-version folder checks for new MasterData and Process Rules, including JSON. Use `git diff --name-only --diff-filter=AR --find-renames` with the same range as the changed-file list. |
 | `--fail-on` | No | (none — always exits `0`) | `Critical`, `High`, or `Medium`. When given, the command exits `1` if any reported finding is at or above this severity. Omit it to keep `scan` purely informational. |
 | `--update-baseline` | No | `false` | Write all current findings (ignoring any existing baseline) to `.codereview.baseline.json` at the repository root, accepting them as known debt — subsequent scans only report findings not in the baseline. Always exits `0` (ignores `--fail-on`). See [docs/configuration.md](configuration.md). |
 
@@ -40,7 +41,7 @@ metadata the CM Framework build/pack tooling reads:
   sibling subfolders as Orchestration roots.
 - Every manifest with `"packageType": "Data"` contributes a DEE root for each `contentToPack` entry
   whose `"contentType": "DEE"`, resolved from that entry's own `source` glob (e.g. `"DEEs/*"` under
-  the manifest's directory) — so both the nested Micron-style `Cmf.<Project>.Data.Packages/DEEs` shape
+  the manifest's directory) — so both the nested `Cmf.<Project>.Data.Packages/DEEs` shape
   and a flat `Cmf.<Project>.Data/DEEs` shape resolve correctly, and a repository with more than one
   Data package (e.g. a Tests package bundling its own DEE fixtures) gets every one of them.
 
@@ -219,13 +220,19 @@ before rendering, so choosing SARIF does not change the findings or exit-code po
 This functionality writes report files. Publishing results or creating PR annotations requires
 a separately configured consumer; no pipeline generation or scaffolding is performed.
 
+## PR deployment validation
+
+See [pr-validation.md](pr-validation.md) for DEE reference rules, package-version folder checks,
+and the required Bash PR-Changes task edits. Historical folder versions are checked only for
+explicit added/renamed files; the reviewer does not infer additions from the changed-file list.
+
 ## Reviewing Process Rules
 
 Process Rule diagnostics run automatically as part of the DEEs/Both scope. No guideline file
-or additional validation flag is required. To focus on the Micron deployment rules:
+or additional validation flag is required. To focus on a customization project's deployment rules:
 
 ```powershell
-cmf-codereview scan --repository-root C:\workspaces\Micron --roots Cmf.Custom.Data/Cmf.Custom.Data.Packages/DEEs/ProcessRules --fail-on High --output findings.json
+cmf-codereview scan --repository-root C:\workspaces\Project --roots Cmf.Custom.Data/Cmf.Custom.Data.Packages/DEEs/ProcessRules --fail-on High --output findings.json
 cmf-codereview report --findings-path findings.json --report-mode Detailed --report-format Html --report-path process-rules.html
 ```
 

@@ -25,6 +25,8 @@ public class ScanCommand : BaseCommand
         var changedFilesListOption = new Option<string?>("--changed-files-list", description:
             "Path to a text file listing changed files (one relative or absolute path per line, e.g. from 'git diff --name-only'). " +
             "When given, only findings on those files are reported, though the whole repository is still analyzed for cross-reference/loop-exposure context.");
+        var addedFilesListOption = new Option<string?>("--added-files-list", description:
+            "Added or renamed files in this PR, one path per line (git diff --name-only --diff-filter=AR -M). Required to validate deployment folder versions without flagging historical files.");
         var failOnOption = new Option<Severity?>("--fail-on", description:
             "If given, exit with a non-zero code when any reported finding is at or above this severity. If omitted, the command always exits 0 regardless of findings.");
         var updateBaselineOption = new Option<bool>("--update-baseline", description:
@@ -48,21 +50,25 @@ public class ScanCommand : BaseCommand
         cmd.AddOption(rootsOption);
         cmd.AddOption(outputOption);
         cmd.AddOption(changedFilesListOption);
+        cmd.AddOption(addedFilesListOption);
         cmd.AddOption(failOnOption);
         cmd.AddOption(updateBaselineOption);
         cmd.AddOption(reportFormatOption);
 
-        cmd.Handler = CommandHandler.Create<string, ReviewScope, string[], string?, string?, Severity?, bool, string?>(Execute);
+        cmd.Handler = CommandHandler.Create<string, ReviewScope, string[], string?, string?, Severity?, bool, string?, string?>(Execute);
     }
 
-    public int Execute(string repositoryRoot, ReviewScope scope, string[] roots, string? output, string? changedFilesList, Severity? failOn, bool updateBaseline, string? reportFormat = null)
+    public int Execute(string repositoryRoot, ReviewScope scope, string[] roots, string? output, string? changedFilesList, Severity? failOn, bool updateBaseline, string? reportFormat = null, string? addedFilesList = null)
     {
         var effectiveRoots = roots is { Length: > 0 } ? roots : CodeReviewPaths.ResolveRoots(repositoryRoot, scope);
         var changedFiles = string.IsNullOrWhiteSpace(changedFilesList)
             ? null
             : File.ReadAllLines(changedFilesList).Select(line => line.Trim()).Where(line => line.Length > 0);
 
-        var findings = CmFrameworkScanner.GetFindings(repositoryRoot, effectiveRoots, changedFiles, applyBaseline: !updateBaseline);
+        var addedFiles = string.IsNullOrWhiteSpace(addedFilesList) ? null : File.ReadAllLines(addedFilesList).Select(line => line.Trim()).Where(line => line.Length > 0);
+        if (changedFilesList is not null && addedFiles is null)
+            Console.Error.WriteLine("warning: deployment folder-version validation is skipped without --added-files-list; changed files alone cannot distinguish new content from historical edits.");
+        var findings = CmFrameworkScanner.GetFindings(repositoryRoot, effectiveRoots, changedFiles, applyBaseline: !updateBaseline, addedFiles: addedFiles);
 
         if (updateBaseline)
         {

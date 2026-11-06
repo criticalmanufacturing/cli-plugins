@@ -58,6 +58,18 @@ public class CodeReviewPathsTests : IDisposable
     }
 
     [Fact]
+    public void OverlappingRootsEnumerateEachFileOnce()
+    {
+        var directory = Path.Combine(_tempRoot, "DEEs", "ProcessRules", "2.62.0", "After");
+        Directory.CreateDirectory(directory);
+        var file = Path.Combine(directory, "Rule.cs");
+        File.WriteAllText(file, "class Rule { }");
+
+        Assert.Equal(file, Assert.Single(CodeReviewPaths.GetFiles(_tempRoot,
+            ["DEEs", Path.Combine("DEEs", "ProcessRules")])));
+    }
+
+    [Fact]
     public void ResolveRoots_NoManifestsResolveToBusinessOrData_ThrowsCliException()
     {
         // cmfpackage.json is the only supported project marker -- a repository with none resolving to
@@ -139,7 +151,7 @@ public class CodeReviewPathsTests : IDisposable
     [Fact]
     public void ResolveRoots_NonCustomProjectPrefix_NestedDataPackagesShape_IsAlsoDiscovered()
     {
-        // The Micron-style nested shape (Cmf.<Project>.Data/Cmf.<Project>.Data.Packages/DEEs) under a
+        // The nested shape (Cmf.<Project>.Data/Cmf.<Project>.Data.Packages/DEEs) under a
         // non-"Custom" project name -- the DEE root comes from the manifest's own contentToPack source,
         // so both DEEs conventions resolve without any special-casing.
         var packagesDir = Path.Combine(_tempRoot, "Cmf.Foo.Data", "Cmf.Foo.Data.Packages");
