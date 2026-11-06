@@ -177,7 +177,7 @@ public sealed class ProcessRuleValidationRule : IReviewRule
 
     private static RuleMatch SchemaMatch(SyntaxNode node, string target) => Match("ProcessRuleSchemaRegeneration", node, Severity.High,
         $"Raw entity-type property update for '{target}' has no recognized subsequent schema regeneration on the same execution path.",
-        "Call GenerateEntityTypeDBSchema for the same entity type or its GenerateSchema method after the update. IMicronEntityTypeService.UpdateEntityTypeProperties already handles regeneration.");
+        "Call GenerateEntityTypeDBSchema for the same entity type or its GenerateSchema method after the update. For UpdateEntityTypeProperties, verify that the project's helper handles schema regeneration.");
 
     private static bool IsSchemaCall(InvocationExpressionSyntax call, string target) =>
         Name(call) == "GenerateSchema" && Tokens(Receiver(call)) == target ||

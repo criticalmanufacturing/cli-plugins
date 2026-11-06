@@ -40,7 +40,7 @@ metadata the CM Framework build/pack tooling reads:
   sibling subfolders as Orchestration roots.
 - Every manifest with `"packageType": "Data"` contributes a DEE root for each `contentToPack` entry
   whose `"contentType": "DEE"`, resolved from that entry's own `source` glob (e.g. `"DEEs/*"` under
-  the manifest's directory) — so both the nested Micron-style `Cmf.<Project>.Data.Packages/DEEs` shape
+  the manifest's directory) — so both the nested `Cmf.<Project>.Data.Packages/DEEs` shape
   and a flat `Cmf.<Project>.Data/DEEs` shape resolve correctly, and a repository with more than one
   Data package (e.g. a Tests package bundling its own DEE fixtures) gets every one of them.
 
@@ -222,10 +222,10 @@ a separately configured consumer; no pipeline generation or scaffolding is perfo
 ## Reviewing Process Rules
 
 Process Rule diagnostics run automatically as part of the DEEs/Both scope. No guideline file
-or additional validation flag is required. To focus on the Micron deployment rules:
+or additional validation flag is required. To focus on a customization project's deployment rules:
 
 ```powershell
-cmf-codereview scan --repository-root C:\workspaces\Micron --roots Cmf.Custom.Data/Cmf.Custom.Data.Packages/DEEs/ProcessRules --fail-on High --output findings.json
+cmf-codereview scan --repository-root C:\workspaces\Project --roots Cmf.Custom.Data/Cmf.Custom.Data.Packages/DEEs/ProcessRules --fail-on High --output findings.json
 cmf-codereview report --findings-path findings.json --report-mode Detailed --report-format Html --report-path process-rules.html
 ```
 
