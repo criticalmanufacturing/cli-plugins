@@ -1,0 +1,198 @@
+name: Release-CodeReview
+run-name: "codereview ${{ inputs.version || 'validation' }} → ${{ inputs.channel || 'next (no publish)' }}"
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - .github/workflows/Release-CodeReview.yml
+      - cmf-codereview/scripts/**
+  workflow_dispatch:
+    inputs:
+      channel:
+        description: "next builds a candidate; latest promotes the tested candidate"
+        required: true
+        type: choice
+        options: [next, latest]
+        default: next
+      version:
+        description: "Exact version, e.g. 1.0.1; publish it as next first"
+        required: true
+        type: string
+      integration_build_url:
+        description: "For latest: successful integration build testing this exact version"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: codereview-repoflow-release
+  cancel-in-progress: false
+
+env:
+  RELEASE_CHANNEL: ${{ inputs.channel || 'next' }}
+  RELEASE_VERSION: ${{ inputs.version || format('0.0.0-ci.{0}.{1}', github.run_id, github.run_attempt) }}
+  INTEGRATION_BUILD_URL: ${{ inputs.integration_build_url }}
+  RELEASE_REGISTRY: ${{ vars.REPOFLOW_NPM_REGISTRY || 'https://cm-collaborationhub.io/api/npm/2305290000030000002/dev/' }}
+  # This switch remains off until the archive upload limit has been resolved.
+  CODE_REVIEW_PUBLISH_ENABLED: ${{ github.event_name == 'workflow_dispatch' && vars.CODE_REVIEW_PUBLISH_ENABLED == 'true' && 'true' || 'false' }}
+
+defaults:
+  run:
+    shell: bash
+    working-directory: cmf-codereview
+
+jobs:
+  plan:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      version: ${{ steps.plan.outputs.version }}
+      publish: ${{ steps.plan.outputs.publish }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Validate inputs and publishing switch
+        id: plan
+        run: node scripts/release.mjs plan
+      - name: Require configured reviewers before requesting latest approval
+        if: inputs.channel == 'latest'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/release.mjs check-approval
+
+  package:
+    if: inputs.channel != 'latest'
+    needs: plan
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '8.0.x'
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: cmf-codereview/package-lock.json
+      - name: Test release guards
+        run: node --test scripts/release.test.mjs
+      - name: Stamp the npm package and executable with the requested version
+        run: node scripts/release.mjs prepare "$RELEASE_VERSION"
+      - name: Restore, build and test
+        run: |
+          set -Eeuo pipefail
+          dotnet restore cmf-codereview.sln
+          dotnet build cmf-codereview.sln -c Release --no-restore
+          dotnet test cmf-codereview.sln -c Release --no-build
+      - name: Build all three self-contained platform bundles
+        run: |
+          set -Eeuo pipefail
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm run build:bundle
+      - name: Pack and verify the archive
+        run: |
+          set -Eeuo pipefail
+          mkdir -p release
+          npm pack ./npm --pack-destination ./release --json > release/pack.json
+          node scripts/release.mjs manifest
+      - uses: actions/upload-artifact@v7
+        with:
+          name: codereview-${{ needs.plan.outputs.version }}
+          path: |
+            cmf-codereview/release/*.tgz
+            cmf-codereview/release/manifest.json
+            cmf-codereview/release/pack.json
+          compression-level: 0
+          if-no-files-found: error
+          retention-days: 30
+
+  smoke:
+    needs: [plan, package]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2025, macos-15-intel]
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - uses: actions/download-artifact@v8
+        with:
+          name: codereview-${{ needs.plan.outputs.version }}
+          path: cmf-codereview/release
+      - name: Install the actual tgz and run a scan
+        run: bash scripts/smoke-package.sh "$GITHUB_WORKSPACE/cmf-codereview/release" "$RELEASE_VERSION"
+
+  publish-next:
+    if: github.event_name == 'workflow_dispatch' && inputs.channel == 'next' && needs.plan.outputs.publish == 'true'
+    needs: [plan, package, smoke]
+    runs-on: ${{ fromJSON(vars.CODE_REVIEW_PUBLISH_RUNNER_JSON || '"ubuntu-24.04"') }}
+    timeout-minutes: 15
+    environment: repoflow-next
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          registry-url: ${{ env.RELEASE_REGISTRY }}
+          scope: '@criticalmanufacturing'
+          package-manager-cache: false
+      - uses: actions/download-artifact@v8
+        with:
+          name: codereview-${{ needs.plan.outputs.version }}
+          path: cmf-codereview/release
+      - name: Publish the tested archive with next only
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.REPOFLOW_NPM_TOKEN }}
+        run: bash scripts/publish-release.sh
+      - name: Record next candidate
+        run: |
+          printf 'Published @criticalmanufacturing/codereview@%s as next.\n' "$RELEASE_VERSION" >> "$GITHUB_STEP_SUMMARY"
+          printf 'Test this exact version in a consuming project integration branch before requesting latest.\n' >> "$GITHUB_STEP_SUMMARY"
+
+  promote-latest:
+    if: github.event_name == 'workflow_dispatch' && inputs.channel == 'latest' && needs.plan.outputs.publish == 'true'
+    needs: plan
+    runs-on: ${{ fromJSON(vars.CODE_REVIEW_PUBLISH_RUNNER_JSON || '"ubuntu-24.04"') }}
+    timeout-minutes: 10
+    environment:
+      name: repoflow-latest
+      url: ${{ inputs.integration_build_url }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          registry-url: ${{ env.RELEASE_REGISTRY }}
+          scope: '@criticalmanufacturing'
+          package-manager-cache: false
+      - name: Promote the approved existing next version without rebuilding
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.REPOFLOW_NPM_TOKEN }}
+        run: bash scripts/publish-release.sh
+      - name: Record approval evidence
+        run: |
+          printf 'Promoted @criticalmanufacturing/codereview@%s to latest.\n' "$RELEASE_VERSION" >> "$GITHUB_STEP_SUMMARY"
+          printf 'Reviewer-approved integration build: %s\n' "$INTEGRATION_BUILD_URL" >> "$GITHUB_STEP_SUMMARY"
