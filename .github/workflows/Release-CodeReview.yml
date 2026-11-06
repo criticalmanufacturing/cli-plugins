@@ -19,8 +19,8 @@ on:
         description: "Exact version, e.g. 1.0.1; publish it as next first"
         required: true
         type: string
-      micron_build_url:
-        description: "For latest: successful Micron PR-Changes build testing this exact version"
+      integration_build_url:
+        description: "For latest: successful integration build testing this exact version"
         required: false
         type: string
 
@@ -35,7 +35,7 @@ concurrency:
 env:
   RELEASE_CHANNEL: ${{ inputs.channel || 'next' }}
   RELEASE_VERSION: ${{ inputs.version || format('0.0.0-ci.{0}.{1}', github.run_id, github.run_attempt) }}
-  MICRON_BUILD_URL: ${{ inputs.micron_build_url }}
+  INTEGRATION_BUILD_URL: ${{ inputs.integration_build_url }}
   RELEASE_REGISTRY: ${{ vars.REPOFLOW_NPM_REGISTRY || 'https://cm-collaborationhub.io/api/npm/2305290000030000002/dev/' }}
   # This switch remains off until the archive upload limit has been resolved.
   CODE_REVIEW_PUBLISH_ENABLED: ${{ github.event_name == 'workflow_dispatch' && vars.CODE_REVIEW_PUBLISH_ENABLED == 'true' && 'true' || 'false' }}
@@ -168,7 +168,7 @@ jobs:
       - name: Record next candidate
         run: |
           printf 'Published @criticalmanufacturing/codereview@%s as next.\n' "$RELEASE_VERSION" >> "$GITHUB_STEP_SUMMARY"
-          printf 'Test this exact version in the Micron integration branch before requesting latest.\n' >> "$GITHUB_STEP_SUMMARY"
+          printf 'Test this exact version in a consuming project integration branch before requesting latest.\n' >> "$GITHUB_STEP_SUMMARY"
 
   promote-latest:
     if: github.event_name == 'workflow_dispatch' && inputs.channel == 'latest' && needs.plan.outputs.publish == 'true'
@@ -177,7 +177,7 @@ jobs:
     timeout-minutes: 10
     environment:
       name: repoflow-latest
-      url: ${{ inputs.micron_build_url }}
+      url: ${{ inputs.integration_build_url }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -195,4 +195,4 @@ jobs:
       - name: Record approval evidence
         run: |
           printf 'Promoted @criticalmanufacturing/codereview@%s to latest.\n' "$RELEASE_VERSION" >> "$GITHUB_STEP_SUMMARY"
-          printf 'Reviewer-approved Micron integration build: %s\n' "$MICRON_BUILD_URL" >> "$GITHUB_STEP_SUMMARY"
+          printf 'Reviewer-approved integration build: %s\n' "$INTEGRATION_BUILD_URL" >> "$GITHUB_STEP_SUMMARY"

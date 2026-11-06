@@ -7,7 +7,7 @@ import path from "node:path";
 import { createManifest, packageName, planRelease, preparePackage, requireReviewers, runtimes,
   validateBuildUrl, validateVersion, verifyArchive, verifyPromotion, verifyRegistry } from "./release.mjs";
 
-const buildUrl = "https://dev.azure.com/criticalmanufacturing/Micron/_build/results?buildId=12345";
+const buildUrl = "https://dev.azure.com/example-org/Project/_build/results?buildId=12345";
 const commit = "a".repeat(40);
 const sha = "sha512-" + createHash("sha512").update("archive").digest("base64");
 
@@ -22,14 +22,18 @@ test("disabled publishing permits a next archive build", () => {
 test("disabled publishing always blocks latest", () => {
   assert.throws(() => planRelease({ channel: "latest", version: "1.0.1", enabled: "false", ref: "refs/heads/main", buildUrl }), /blocked/);
 });
-test("latest needs main and a Micron build URL", () => {
+test("latest needs main and an integration build URL", () => {
   assert.throws(() => planRelease({ channel: "latest", version: "1.0.1", enabled: "true", ref: "refs/heads/feature", buildUrl }), /main/);
   assert.throws(() => planRelease({ channel: "latest", version: "1.0.1", enabled: "true", ref: "refs/heads/main", buildUrl: "" }));
   assert.equal(planRelease({ channel: "latest", version: "1.0.1", enabled: "true", ref: "refs/heads/main", buildUrl }).publish, true);
 });
-test("test evidence links target the expected Azure project", () => {
+test("test evidence links support different Azure organizations and projects", () => {
   assert.equal(validateBuildUrl(buildUrl), buildUrl);
-  for (const value of ["https://example.com/?buildId=123", buildUrl.replace("Micron", "Other"), buildUrl.replace("12345", "bad")])
+  const otherProject = "https://dev.azure.com/other-org/Another%20Project/_build/results?buildId=67890";
+  assert.equal(validateBuildUrl(otherProject), otherProject);
+  for (const value of ["https://example.com/?buildId=123", buildUrl.replace('/_build/results', '/_git/repository'),
+    buildUrl.replace('/Project', ''), buildUrl.replace("12345", "bad"), buildUrl.replace('https://', 'http://'),
+    buildUrl.replace('https://', 'https://user:password@'), buildUrl + '#fragment'])
     assert.throws(() => validateBuildUrl(value));
 });
 test("promotion requires configured manual reviewers", () => {

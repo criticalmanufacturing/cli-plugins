@@ -97,4 +97,4 @@ dotnet test
 
 ## Releases
 
-See [the release guide](docs/Releases.md) for the GitHub Actions `next` candidate and approved `latest` promotion flow, required repository settings, and the Micron integration branch. Publication remains disabled until the RepoFlow upload limit is resolved.
+See [the release guide](docs/Releases.md) for the GitHub Actions `next` candidate and approved `latest` promotion flow, required repository settings, and consuming-project integration testing. Publication remains disabled until the RepoFlow upload limit is resolved.

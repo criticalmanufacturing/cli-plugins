@@ -20,9 +20,9 @@ export function validateVersion(version) {
 
 export function validateBuildUrl(value) {
   const url = new URL(value);
-  assert.equal(url.origin, "https://dev.azure.com", "Use the Micron Azure DevOps build URL");
-  assert.match(url.pathname, /^\/criticalmanufacturing\/(?:Micron|158158e7-e373-4c78-8228-02969c06e7b0)\/_build\/results\/?$/i);
-  assert.match(url.searchParams.get("buildId") || "", /^[1-9]\d*$/, "A Micron build ID is required");
+  assert.equal(url.origin, "https://dev.azure.com", "Use an Azure DevOps integration build URL");
+  assert.match(url.pathname, /^\/[^/]+\/[^/]+\/_build\/results\/?$/i, "Use an organization/project build results URL");
+  assert.match(url.searchParams.get("buildId") || "", /^[1-9]\d*$/, "An integration build ID is required");
   assert.ok(!url.username && !url.password && !url.hash, "Invalid build URL");
   return url.toString();
 }
@@ -124,12 +124,12 @@ async function main(command, ...args) {
   switch (command) {
     case "plan": {
       const plan = planRelease({ channel: env.RELEASE_CHANNEL, version: env.RELEASE_VERSION,
-        enabled: env.CODE_REVIEW_PUBLISH_ENABLED, buildUrl: env.MICRON_BUILD_URL, ref: env.GITHUB_REF });
+        enabled: env.CODE_REVIEW_PUBLISH_ENABLED, buildUrl: env.INTEGRATION_BUILD_URL, ref: env.GITHUB_REF });
       output("version", plan.version);
       output("publish", String(plan.publish));
       summary("Version: " + plan.version + "; channel: " + plan.channel +
         (plan.publish ? "" : "\nPublishing is DISABLED. This run only builds and tests the archive."));
-      if (plan.channel === "latest") summary("Micron integration run to review before approval: " + validateBuildUrl(env.MICRON_BUILD_URL));
+      if (plan.channel === "latest") summary("Integration run to review before approval: " + validateBuildUrl(env.INTEGRATION_BUILD_URL));
       break;
     }
     case "check-approval": {
