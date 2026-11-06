@@ -152,6 +152,23 @@ public sealed class DeploymentVersionTests : IDisposable
         Assert.Empty(CmFrameworkScanner.GetFindings(_root, entityCatalog: EntityCatalog.Empty));
     }
 
+    [Fact]
+    public void OverlappingRoots_ReportProcessRuleAndAddedFileVersionFindingsOnce()
+    {
+        var file = Write("DEEs/ProcessRules/EntityTypesAttributes/2.60.0/Rule.cs");
+        File.WriteAllText(Path.Combine(_root, file), ProcessRuleValidationTests.Source(
+            "IAction target = provider.GetService<IAction>(); target.Delete();",
+            ns: "EntityTypesAttributes._2_60_0"));
+        var roots = CodeReviewPaths.ResolveRoots(_root, ReviewScope.DEEs);
+
+        var findings = CmFrameworkScanner.GetFindings(_root, roots: roots.Concat(roots),
+            changedFiles: [file], addedFiles: [file], entityCatalog: TestEntities.Catalog);
+
+        Assert.Single(findings, finding => finding.Rule == "ProcessRuleUnguardedMutation");
+        Assert.Single(findings, finding => finding.Rule == "DeploymentVersionMismatch");
+        Assert.All(findings, finding => Assert.Equal(file, finding.RelativePath));
+    }
+
     [Theory]
     [InlineData("MasterData/$(version)/**/*.json", "MasterData/2.60.0/data.json")]
     [InlineData("MasterData/$(version)/**/*.json", "MasterData/2.60.0/sub/data.json")]

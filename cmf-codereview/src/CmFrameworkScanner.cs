@@ -201,7 +201,8 @@ public static class CmFrameworkScanner
         new ConfigGetConfigRule(),
         new GetConfigInsteadOfTryGetConfigRule(),
         new ConfigWriteInHotPathRule(),
-        new ApplicationContextInExtensionRule()
+        new ApplicationContextInExtensionRule(),
+        new ProcessRuleValidationRule()
     ];
 
     /// <summary>Rule names for which severity can be escalated when the match sits in a nested loop or a caller-induced loop.</summary>
@@ -280,6 +281,9 @@ public static class CmFrameworkScanner
             _ = source.MethodRanges;
         });
         Mark("warm cache");
+        var processRuleRepository = ProcessRuleRepositoryContext.Build(repositoryRoot,
+            CodeReviewPaths.GetFiles(repositoryRoot, CodeReviewPaths.ResolveRoots(repositoryRoot, ReviewScope.Both)).Concat(files).Distinct(StringComparer.OrdinalIgnoreCase), fileCache);
+        Mark("Process Rule deployment context");
 
         var serviceEndpointMap = CmServiceEndpointResolver.GetServiceEndpointMap(repositoryRoot);
         Mark("service endpoints");
@@ -322,7 +326,7 @@ public static class CmFrameworkScanner
         var findings = filesToReport
             .AsParallel().AsOrdered()
             .SelectMany(file => FindFileFindings(file, fileCache, callGraph, loopExposureCache, settings, baseline,
-                serviceEndpointMap, deeClassNameByFile, deeInvocationMap, orchestrationCallSitesInDees, activeRules, repositoryRoot, entityCatalog))
+                serviceEndpointMap, deeClassNameByFile, deeInvocationMap, orchestrationCallSitesInDees, activeRules, repositoryRoot, entityCatalog, processRuleRepository))
             .ToList();
         Mark("rule loop");
         if (addedFiles is not null)
@@ -340,13 +344,13 @@ public static class CmFrameworkScanner
         ConcurrentDictionary<string, LoopExposure?> loopExposureCache, CodeReviewSettings? settings, CodeReviewBaseline? baseline,
         Dictionary<string, ServiceEndpointInfo> serviceEndpointMap, Dictionary<string, string> deeClassNameByFile,
         Dictionary<string, List<DeeInvocationRecord>> deeInvocationMap, Dictionary<string, OrchestrationCallSite> orchestrationCallSitesInDees,
-        IReadOnlyList<IReviewRule> activeRules, string repositoryRoot, EntityCatalog entityCatalog)
+        IReadOnlyList<IReviewRule> activeRules, string repositoryRoot, EntityCatalog entityCatalog, ProcessRuleRepositoryContext processRuleRepository)
     {
         var findings = new List<Finding>();
         {
             var source = fileCache.Get(file);
             var lines = source.Lines;
-            var context = RuleFileContext.Build(source, callGraph, loopExposureCache, entityCatalog);
+            var context = RuleFileContext.Build(source, callGraph, loopExposureCache, entityCatalog, processRuleRepository);
 
             CrossReference? deeCrossReference = null;
             if (context.IsDeeFile)

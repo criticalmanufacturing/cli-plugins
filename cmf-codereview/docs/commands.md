@@ -226,6 +226,19 @@ See [pr-validation.md](pr-validation.md) for DEE reference rules, package-versio
 and the required Bash PR-Changes task edits. Historical folder versions are checked only for
 explicit added/renamed files; the reviewer does not infer additions from the changed-file list.
 
+## Reviewing Process Rules
+
+Process Rule diagnostics run automatically as part of the DEEs/Both scope. No guideline file
+or additional validation flag is required. To focus on the Micron deployment rules:
+
+```powershell
+cmf-codereview scan --repository-root C:\workspaces\Micron --roots Cmf.Custom.Data/Cmf.Custom.Data.Packages/DEEs/ProcessRules --fail-on High --output findings.json
+cmf-codereview report --findings-path findings.json --report-mode Detailed --report-format Html --report-path process-rules.html
+```
+
+Supported Process Rule checks and deployment evidence that still needs review are documented in
+[rules.md](rules.md#process-rule-deployment-validation).
+
 ## Choosing between the three commands
 
 - Use **`review`** for everyday use — it's the one-command path from repository to report.
