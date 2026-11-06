@@ -33,9 +33,8 @@ The reviewer currently inspects complete method bodies rather than extracting on
 between deployed-code markers. Its C# syntax analysis also accepts declaration forms that Product's
 regex extraction does not, such as whitespace between `UseReference` and `(`. Declarations outside
 the deployed region can incorrectly satisfy a reference, and syntax differences can cause missed
-findings or false positives. Marker extraction and declaration-syntax parity are deferred follow-up
-work, alongside host configuration, as recorded in
-[User Story 53349](https://dev.azure.com/criticalmanufacturing/Micron/_workitems/edit/53349).
+findings or false positives. Marker extraction, declaration-syntax parity and host configuration
+remain deferred follow-up work.
 
 ### Product compiler verification
 
@@ -57,7 +56,7 @@ unit tests' compiler fixture:
 
 ```powershell
 dotnet run --project tools/DeeCompilerCheck -c Release -- `
-  C:\workspaces\Micron\Cmf.Custom.Data\Cmf.Custom.Data.Packages\DEEs\Cmf.Custom.Micron.Actions.csproj `
+  C:\workspaces\Project\Cmf.Custom.Data\Cmf.Custom.Data.Packages\DEEs\Cmf.Custom.Actions.csproj `
   compiler-check.json
 ```
 
@@ -103,7 +102,7 @@ applicable, `--fail-on`, and the existing JSON, HTML, Markdown and SARIF outputs
 
 ## Changes to the Bash PR-Changes task
 
-The pipeline YAML in Micron is intentionally not changed here. Apply these edits to the Bash task
+Apply these edits to the consuming project's Bash PR-Changes task
 once `CmfCodeReviewVersion` selects a published version containing this feature. Keep findings in
 JSON for the existing inline-comment consumer. Restore/build must precede reference validation;
 the reviewer does not perform restores or acquire feed credentials.
