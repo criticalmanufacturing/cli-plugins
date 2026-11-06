@@ -101,9 +101,10 @@ Guards recognize `HasProperty`, `TryGetEntityTypeProperty`, `ObjectExists`, `Try
 negation/comparisons, applicable branches, and early returns. Checks on another property or target
 do not protect an operation. Reachable local functions are analyzed, including guards at their
 call sites; dormant local functions and callbacks are excluded. Raw metadata changes recognize
-`GenerateSchema` and `GenerateEntityTypeDBSchema` after the update. The normal
-`IMicronEntityTypeService.UpdateEntityTypeProperties` route does not require a duplicate schema
-call. A guarded removal followed by recreation supports deliberate attribute-definition repairs;
+`GenerateSchema` and `GenerateEntityTypeDBSchema` after the update. The supported
+`UpdateEntityTypeProperties` helper pattern is treated as schema-aware and does not require a
+duplicate schema call; verify that the project's helper performs regeneration. A guarded removal
+followed by recreation supports deliberate attribute-definition repairs;
 the removal still needs value cleanup.
 
 Schema context is read once per scan from the same Data package's versioned MasterData. It tracks

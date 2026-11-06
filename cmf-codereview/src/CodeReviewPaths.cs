@@ -35,7 +35,7 @@ public static class CodeReviewPaths
     // File-classification regexes are structural (any "Cmf.<Project>.Business/Cmf.<Project>.Orchestration/"
     // shaped segment matches), not tied to the literal "Custom" project name -- so a customization
     // project using any other name (e.g. "Cmf.Semi.*") is classified correctly. Both the nested
-    // Micron-style DEEs path (Cmf.<X>.Data/Cmf.<X>.Data.Packages/DEEs) and the flatter convention
+    // nested DEEs path (Cmf.<X>.Data/Cmf.<X>.Data.Packages/DEEs) and the flatter convention
     // (Cmf.<X>.Data/DEEs) are matched. Kept independent of manifest-based root discovery -- these
     // classify individual files by shape, not by resolving package metadata.
     private static readonly Regex OrchestrationSegmentRegex =
