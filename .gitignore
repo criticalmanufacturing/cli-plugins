@@ -11,3 +11,5 @@
 *.snupkg
 npm-debug.log*
 .npmrc
+
+devcontainer-lock.json
