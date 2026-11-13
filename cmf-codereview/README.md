@@ -60,7 +60,9 @@ documented in [docs/commands.md](docs/commands.md) — start there for anything 
 
 ## What it looks for
 
-See [docs/rules.md](docs/rules.md) for the full list of the 17 rules, their severity, and suggested fixes.
+See [docs/rules.md](docs/rules.md) for checks, severities, and suggested fixes.
+[PR validation](docs/pr-validation.md) covers DEE UseReference declarations, deployment folder
+versions, and the added/renamed file input required by PR-Changes.
 
 ## Configuration
 
