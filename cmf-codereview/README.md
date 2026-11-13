@@ -95,6 +95,6 @@ baseline (`scan --update-baseline`) so CI gates only fail on new findings. See
 dotnet test
 ```
 
-## Releases
+## Packages for manual testing
 
-See [the release guide](docs/Releases.md) for the GitHub Actions `next` candidate and approved `latest` promotion flow, required repository settings, and consuming-project integration testing. Publication remains disabled until the RepoFlow upload limit is resolved.
+The `Package-CodeReview` GitHub Actions workflow automatically builds and tests an all-platform package on pull requests and pushes to `main`. After the .NET tests and Windows/Linux/Intel macOS package checks pass, download the `codereview-<version>` artifact for manual testing. Set the next version in `npm/package.json` (currently `1.1.0`). See [the package guide](docs/Releases.md) for the workflow and download instructions. Integration testing and publication are manual.

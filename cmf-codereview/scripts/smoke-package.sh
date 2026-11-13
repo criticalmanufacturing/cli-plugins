@@ -3,8 +3,8 @@ set -Eeuo pipefail
 
 release_dir="$1"
 version="$2"
-helper="$(pwd)/scripts/release.mjs"
-archive="$(node "$helper" archive "$release_dir" "$version")"
+helper="$(pwd)/scripts/package.mjs"
+archive="$(node "$helper" archive "$release_dir" "$version" "${3:-}")"
 install_dir="$(mktemp -d)"
 cleanup() {
     local status=$?
