@@ -165,7 +165,7 @@ public class CmCallGraphBuilderTests : IDisposable
     [Fact]
     public void BuildCallGraph_MemberAccessCallMatchingOnlyALocalFunctionName_GetsNoCallerEdge()
     {
-        // Regression for the real Micron-1 case: a platform call
+        // Regression for a platform call that was mistaken for a local helper:
         // _exceptionOrchestration.OpenProtocolInstance(...) was misbound to a same-named DEE-LOCAL
         // function, fabricating a caller-loop chain. A receiver.Method() call can never target a
         // local function (local functions are called by bare name), so the name must not be a target.

@@ -26,6 +26,15 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
+      - name: Set up Node.js for package validation tests
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          package-manager-cache: false
+
+      - name: Test package validation
+        run: node --test scripts/package.test.mjs
+
       - name: Restore dependencies of cmf-codereviewer
         run: dotnet restore cmf-codereview.sln
 

@@ -1,0 +1,132 @@
+name: Package-CodeReview
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+    working-directory: cmf-codereview
+
+jobs:
+  package:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    outputs:
+      version: ${{ steps.prepare.outputs.version }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '8.0.x'
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: cmf-codereview/package-lock.json
+      - name: Test package validation
+        run: node --test scripts/package.test.mjs
+      - name: Read npm version and stamp the executable
+        id: prepare
+        run: node scripts/package.mjs prepare
+      - name: Restore, build and test
+        run: |
+          set -Eeuo pipefail
+          dotnet restore cmf-codereview.sln
+          dotnet build cmf-codereview.sln -c Release --no-restore
+          dotnet test cmf-codereview.sln -c Release --no-build
+      - name: Build Windows, Linux and Intel macOS bundles
+        run: |
+          set -Eeuo pipefail
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm run build:bundle
+      - name: Pack and verify the archive
+        run: |
+          set -Eeuo pipefail
+          mkdir -p release
+          npm pack ./npm --pack-destination ./release --json > release/pack.json
+          node scripts/package.mjs manifest
+      # Only used to transfer the archive between jobs; not a ready-to-test package.
+      - uses: actions/upload-artifact@v7
+        with:
+          name: unvalidated-codereview-${{ steps.prepare.outputs.version }}
+          path: |
+            cmf-codereview/release/*.tgz
+            cmf-codereview/release/manifest.json
+            cmf-codereview/release/pack.json
+          compression-level: 0
+          if-no-files-found: error
+          retention-days: 1
+
+  smoke:
+    needs: package
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2025, macos-15-intel]
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - uses: actions/download-artifact@v8
+        with:
+          name: unvalidated-codereview-${{ needs.package.outputs.version }}
+          path: cmf-codereview/release
+      - name: Install the tgz, check the version and scan a known fixture
+        run: bash scripts/smoke-package.sh "$GITHUB_WORKSPACE/cmf-codereview/release" "${{ needs.package.outputs.version }}" "$GITHUB_SHA"
+
+  ready:
+    name: Package ready for manual testing
+    needs: [package, smoke]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - uses: actions/download-artifact@v8
+        with:
+          name: unvalidated-codereview-${{ needs.package.outputs.version }}
+          path: cmf-codereview/release
+      - name: Verify the validated archive before making it available
+        env:
+          PACKAGE_VERSION: ${{ needs.package.outputs.version }}
+        run: node scripts/package.mjs archive release "$PACKAGE_VERSION" "$GITHUB_SHA"
+      - name: Upload package for manual testing
+        uses: actions/upload-artifact@v7
+        with:
+          name: codereview-${{ needs.package.outputs.version }}
+          path: |
+            cmf-codereview/release/*.tgz
+            cmf-codereview/release/manifest.json
+            cmf-codereview/release/pack.json
+          compression-level: 0
+          if-no-files-found: error
+          retention-days: 30
+      - name: Record package readiness
+        env:
+          PACKAGE_VERSION: ${{ needs.package.outputs.version }}
+        run: |
+          printf 'Package codereview-%s is ready for manual testing.\n' "$PACKAGE_VERSION" >> "$GITHUB_STEP_SUMMARY"
+          printf 'Build, unit tests and Windows/Linux/Intel macOS install-and-scan checks passed.\n' >> "$GITHUB_STEP_SUMMARY"
+          printf 'Source commit: %s\n' "$GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
+          printf 'Download the codereview artifact from this successful run. Testing in a consuming pipeline and publication are manual.\n' >> "$GITHUB_STEP_SUMMARY"
