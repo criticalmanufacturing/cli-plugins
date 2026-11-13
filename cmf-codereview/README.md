@@ -97,4 +97,4 @@ dotnet test
 
 ## Packages for manual testing
 
-The `Package-CodeReview` GitHub Actions workflow automatically builds and tests an all-platform package on pull requests and pushes to `main`. After the .NET tests and Windows/Linux/Intel macOS package checks pass, download the `codereview-<version>` artifact for manual testing. Set the next version in `npm/package.json` (currently `1.1.0`). See [the package guide](docs/Releases.md) for the workflow and download instructions. Integration testing and publication are manual.
+The `Package-CodeReview` GitHub Actions workflow automatically builds and tests an all-platform package on pull requests and pushes to `main`. After the .NET tests and Windows/Linux/Intel macOS package checks pass, download the `codereview-<version>` artifact for manual testing. Set the next version in `npm/package.json`; the workflow reads it automatically for each run. See [the package guide](docs/Releases.md) for the workflow and download instructions. Integration testing and publication are manual.

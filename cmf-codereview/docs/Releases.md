@@ -4,11 +4,7 @@ The `Package-CodeReview` GitHub Actions workflow automatically builds and valida
 
 ## Choose the next version
 
-Edit `version` in **`cmf-codereview/npm/package.json`**. The current target is **`1.1.0`**. Use an exact npm version without a `v` prefix:
-
-```json
-"version": "1.1.0"
-```
+Edit `version` in **`cmf-codereview/npm/package.json`** when preparing a release. Use an exact npm version without a `v` prefix, such as `2.4.7` or `7.0.0-rc.2`. The workflow supports stable and prerelease versions and has no fixed target version. The automation change itself does not bump the distributed package version; prepare the next release version separately after merging it.
 
 This manifest is the workflow's source for the package version. The workflow reads it and sets the same version in `src/cmf-codereview.csproj` before building, so the executable and npm package agree. There is no workflow version input, automatic version bump, source commit, Git tag or GitHub release. The root `cmf-codereview/package.json` belongs to the build tooling and does not set the distributed plugin's version.
 
@@ -29,14 +25,16 @@ No approval, publishing environment, registry credential or release switch is ne
 
 1. Open the PR's **Package-CodeReview** check or select the run under **Actions > Package-CodeReview**.
 2. Confirm the workflow completed successfully, including **Package ready for manual testing**. The separate `CI-Build` check should also pass before merging the PR.
-3. Download **`codereview-1.1.0`** from the run's **Artifacts** section. Extract the downloaded ZIP to obtain the `.tgz`, `manifest.json` and `pack.json`.
+3. Download **`codereview-<version>`** from the run's **Artifacts** section, where `<version>` is the value in `npm/package.json` for that run. Extract the downloaded ZIP to obtain the `.tgz`, `manifest.json` and `pack.json`.
 4. Install the extracted `.tgz` in your manual test environment. For example, from a temporary npm project:
 
    ```bash
-   npm install /path/to/criticalmanufacturing-codereview-1.1.0.tgz
+   npm install /path/to/criticalmanufacturing-codereview-<version>.tgz
    npx --no-install cmf-codereview --version
    npx --no-install cmf-codereview scan --repository-root /path/to/customization --output findings.json
    ```
+
+   Replace `<version>` with the version in the downloaded archive's filename before running these commands.
 
 5. Test the package in a consuming project's PR validation pipeline, including dependency restoration and inline PR comments. Use the same archive and keep the source commit/integrity with your test results.
 
