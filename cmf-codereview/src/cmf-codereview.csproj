@@ -9,7 +9,7 @@
     <AssemblyName>cmf-codereview</AssemblyName>
     <ToolCommandName>cmf-codereview</ToolCommandName>
     <PackAsTool>true</PackAsTool>
-    <Version>1.0.0-alpha</Version>
+    <Version>1.1.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
