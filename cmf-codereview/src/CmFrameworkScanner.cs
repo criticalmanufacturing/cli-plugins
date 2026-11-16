@@ -225,13 +225,16 @@ public static class CmFrameworkScanner
     /// <c>.codereview.baseline.json</c> (when present and <paramref name="applyBaseline"/> is true) are excluded.
     /// </summary>
     public static List<Finding> GetFindings(string repositoryRoot, IEnumerable<string>? roots = null, IEnumerable<string>? changedFiles = null,
-        CodeReviewSettings? settings = null, bool applyBaseline = true, EntityCatalog? entityCatalog = null)
+        CodeReviewSettings? settings = null, bool applyBaseline = true, EntityCatalog? entityCatalog = null, IEnumerable<string>? addedFiles = null)
     {
         roots ??= CodeReviewPaths.ResolveRoots(repositoryRoot, ReviewScope.Both);
         settings ??= CodeReviewSettings.Load(repositoryRoot);
         var baseline = applyBaseline ? CodeReviewBaseline.Load(repositoryRoot) : null;
+        var fileCache = new CodeReviewFileCache();
+        changedFiles = changedFiles?.ToArray();
         var customRules = settings?.BuildCustomRules();
-        var activeRules = customRules is { Count: > 0 } ? Rules.Concat(customRules).ToList() : Rules;
+        var builtInRules = Rules.Concat(new IReviewRule[] { new DeeReferenceRule(new DeeReferenceRepository(repositoryRoot, fileCache)) }).ToList();
+        var activeRules = customRules is { Count: > 0 } ? builtInRules.Concat(customRules).ToList() : builtInRules;
 
         var files = CodeReviewPaths.GetFiles(repositoryRoot, roots);
         // Resolve the entity catalog from the repo's referenced assemblies unless a caller injected one
@@ -267,7 +270,6 @@ public static class CmFrameworkScanner
             }
         }
 
-        var fileCache = new CodeReviewFileCache();
         // Warm the cache in parallel across every file the pre-passes and rule loop will touch:
         // parsing dominates scan time and each file's artifacts are independent, so this is where
         // multicore actually pays. The passes below then run over already-parsed trees.
@@ -327,6 +329,8 @@ public static class CmFrameworkScanner
                 serviceEndpointMap, deeClassNameByFile, deeInvocationMap, orchestrationCallSitesInDees, activeRules, repositoryRoot, entityCatalog, processRuleRepository))
             .ToList();
         Mark("rule loop");
+        if (addedFiles is not null)
+            findings.AddRange(DeploymentVersionValidator.GetFindings(repositoryRoot, addedFiles, changedFiles, settings, baseline));
 
         return findings
             .OrderBy(f => f.Severity switch { Severity.Critical => 0, Severity.High => 1, _ => 2 })

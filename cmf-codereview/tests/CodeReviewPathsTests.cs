@@ -58,6 +58,18 @@ public class CodeReviewPathsTests : IDisposable
     }
 
     [Fact]
+    public void OverlappingRootsEnumerateEachFileOnce()
+    {
+        var directory = Path.Combine(_tempRoot, "DEEs", "ProcessRules", "2.62.0", "After");
+        Directory.CreateDirectory(directory);
+        var file = Path.Combine(directory, "Rule.cs");
+        File.WriteAllText(file, "class Rule { }");
+
+        Assert.Equal(file, Assert.Single(CodeReviewPaths.GetFiles(_tempRoot,
+            ["DEEs", Path.Combine("DEEs", "ProcessRules")])));
+    }
+
+    [Fact]
     public void ResolveRoots_NoManifestsResolveToBusinessOrData_ThrowsCliException()
     {
         // cmfpackage.json is the only supported project marker -- a repository with none resolving to

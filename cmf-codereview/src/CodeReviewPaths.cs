@@ -125,7 +125,9 @@ public static class CodeReviewPaths
             !other.Equals(root, StringComparison.OrdinalIgnoreCase) &&
             root.StartsWith(other + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))).ToArray();
 
-        if (orchestrationRoots.Length == 0 && deeRoots.Length == 0)
+        // MasterData-only Data packages still need added-file version validation without C# roots.
+        if (orchestrationRoots.Length == 0 && deeRoots.Length == 0 &&
+            !manifests.Any(m => string.Equals(m.PackageType, "Data", StringComparison.OrdinalIgnoreCase)))
         {
             throw new CliException(
                 $"No cmfpackage.json under '{fullRepositoryRoot}' resolves to a Business or Data package " +
