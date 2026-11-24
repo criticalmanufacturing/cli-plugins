@@ -19,7 +19,8 @@ public static class CmHtmlReportGenerator
         "<th>Cross-Reference</th><th>Description</th><th>Code snippet</th></tr></thead>";
 
     /// <summary>HTML counterpart of <see cref="CmReportGenerator.BuildDetailedReport"/>: rule summary plus severity-grouped, collapsible per-rule sections.</summary>
-    public static string BuildDetailedReport(IReadOnlyList<Finding> findings, string title, string summary)
+    public static string BuildDetailedReport(IReadOnlyList<Finding> findings, string title, string summary,
+        IReadOnlyList<ActionGroupSummary>? actionGroupSummaries = null)
     {
         var pageTitle = $"Detailed Remediation Backlog — {title}";
         var body = new StringBuilder();
@@ -92,11 +93,13 @@ public static class CmHtmlReportGenerator
             }
         }
 
+        AppendActionGroupSummary(body, actionGroupSummaries);
         return RenderPage(pageTitle, body.ToString());
     }
 
     /// <summary>HTML counterpart of <see cref="CmReportGenerator.BuildStandardReport"/>: one findings table per severity band.</summary>
-    public static string BuildStandardReport(IReadOnlyList<Finding> findings, string title, string summary)
+    public static string BuildStandardReport(IReadOnlyList<Finding> findings, string title, string summary,
+        IReadOnlyList<ActionGroupSummary>? actionGroupSummaries = null)
     {
         var body = new StringBuilder();
         body.Append("<h1>").Append(Enc(title)).Append("</h1>");
@@ -125,7 +128,28 @@ public static class CmHtmlReportGenerator
             body.Append("</tbody></table></div>");
         }
 
+        AppendActionGroupSummary(body, actionGroupSummaries);
         return RenderPage(title, body.ToString());
+    }
+
+    private static void AppendActionGroupSummary(StringBuilder body, IReadOnlyList<ActionGroupSummary>? summaries)
+    {
+        if (summaries is null) return;
+        body.Append("<h2>Action Group Summary</h2><p>Counts include every MasterData-wired DEE, including DEEs without findings. Endpoints are possible static callers, not observed runtime traffic.</p>");
+        if (summaries.Count == 0)
+        {
+            body.Append("<p>No MasterData DEE wiring found.</p>");
+            return;
+        }
+        body.Append("<div class=\"tablewrap\"><table><thead><tr><th>Action Group</th><th>DeeCount</th><th>RiskLevel</th><th>DEEs</th><th>Possible Service Endpoints</th></tr></thead><tbody>");
+        foreach (var item in summaries)
+        {
+            body.Append("<tr><td>").Append(Enc(item.ActionGroup)).Append("</td><td>").Append(item.DeeCount)
+                .Append("</td><td>").Append(Enc(item.RiskLevel.ToString())).Append("</td><td>")
+                .Append(Enc(string.Join(", ", item.Dees))).Append("</td><td>")
+                .Append(Enc(string.Join(", ", item.PossibleServiceEndpoints))).Append("</td></tr>");
+        }
+        body.Append("</tbody></table></div>");
     }
 
     private static void AppendFindingRow(StringBuilder sb, Finding f, bool includeRuleAndFix)

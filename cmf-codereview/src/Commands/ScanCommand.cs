@@ -32,6 +32,8 @@ public class ScanCommand : BaseCommand
             "subsequent scans only report findings not in the baseline. Always exits 0.");
 
         var reportFormatOption = new Option<string>("--report-format", () => "Json", "Findings output format: Json (default) or Sarif");
+        var includeActionGroupSummaryOption = new Option<bool>("--include-action-group-summary",
+            "Include Action Group summaries in a JSON envelope or SARIF run properties. JSON defaults to the legacy findings array.");
         reportFormatOption.AddValidator(result =>
         {
             var value = result.GetValueForOption(reportFormatOption);
@@ -51,18 +53,19 @@ public class ScanCommand : BaseCommand
         cmd.AddOption(failOnOption);
         cmd.AddOption(updateBaselineOption);
         cmd.AddOption(reportFormatOption);
+        cmd.AddOption(includeActionGroupSummaryOption);
 
-        cmd.Handler = CommandHandler.Create<string, ReviewScope, string[], string?, string?, Severity?, bool, string?>(Execute);
+        cmd.Handler = CommandHandler.Create((Func<string, ReviewScope, string[], string?, string?, Severity?, bool, string?, bool, int>)Execute);
     }
 
-    public int Execute(string repositoryRoot, ReviewScope scope, string[] roots, string? output, string? changedFilesList, Severity? failOn, bool updateBaseline, string? reportFormat = null)
+    public int Execute(string repositoryRoot, ReviewScope scope, string[] roots, string? output, string? changedFilesList, Severity? failOn, bool updateBaseline, string? reportFormat = null, bool includeActionGroupSummary = false)
     {
         var effectiveRoots = roots is { Length: > 0 } ? roots : CodeReviewPaths.ResolveRoots(repositoryRoot, scope);
         var changedFiles = string.IsNullOrWhiteSpace(changedFilesList)
             ? null
             : File.ReadAllLines(changedFilesList).Select(line => line.Trim()).Where(line => line.Length > 0);
 
-        var findings = CmFrameworkScanner.GetFindings(repositoryRoot, effectiveRoots, changedFiles, applyBaseline: !updateBaseline);
+        var findings = CmFrameworkScanner.GetFindings(repositoryRoot, effectiveRoots, changedFiles, null, !updateBaseline, null, out var actionGroupSummaries);
 
         if (updateBaseline)
         {
@@ -73,8 +76,9 @@ public class ScanCommand : BaseCommand
         }
 
         var json = reportFormat?.Equals("sarif", StringComparison.OrdinalIgnoreCase) == true
-            ? CmSarifReportGenerator.BuildStandardReport(findings, ReportCommand.DefaultTitle, ReportCommand.DefaultSummary)
-            : FindingsIo.Serialize(findings);
+            ? CmSarifReportGenerator.BuildStandardReport(findings, ReportCommand.DefaultTitle, ReportCommand.DefaultSummary,
+                includeActionGroupSummary ? actionGroupSummaries : null)
+            : includeActionGroupSummary ? FindingsIo.Serialize(findings, actionGroupSummaries) : FindingsIo.Serialize(findings);
 
         if (!string.IsNullOrWhiteSpace(output))
         {

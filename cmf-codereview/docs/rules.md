@@ -190,6 +190,37 @@ member access whether written as `a.Foo` or the null-conditional `a?.Foo`) live 
 
 ## Cross-reference and loop-exposure context
 
+### Action Group Summary
+
+MasterData wiring is many-to-many: one DEE can be wired to several Action Groups, and each group can
+have several DEEs. The resolver reads `DEEActionOrder` objects from numeric version folders under
+every Data manifest's `MasterData` content prefix. It retains every distinct `(Action, ActionGroup)`
+pair, including three or more groups in one file. An exact repeated pair keeps the highest numeric
+version's source across **all** roots; equal versions choose the ordinally greatest repository-relative
+path (using `/` separators). Missing version components are zero, so `2.10` equals `2.10.0`.
+
+`DeeCount` counts distinct DEE names under **each** group they are wired to, including DEEs with no
+findings or no source file in the selected scan scope. Repeated pairs do not increase the count.
+`RiskLevel` describes coupling: 1 DEE is `Low`, 2 are `Medium`, 3 are `High`, and 4 or more are
+`Critical`. It is separate from finding severity and does not affect `--fail-on`. Pre and Post
+groups remain distinct. Summaries sort by descending count, then ordinal Action Group name; DEE
+names and possible endpoints sort ordinally.
+
+`PossibleServiceEndpoints` lists possible static callers found by walking the existing name-based
+call graph backwards from the group's method segment. This is not runtime observation or proof of
+reachability through compiled platform code. It retains the existing endpoint resolver's
+`Cmf.Custom.Business/Cmf.Custom.Services` controller discovery limitation. Legacy report fallback
+without a scan graph leaves endpoint lists empty. `Origin` remains `Unknown` in this foundation.
+
+This step models JSON additions. Process Rule removal analysis, origin classification, nested
+catalogs, per-finding Action Group fields and trace-span identifiers are separate migration stories.
+Malformed/unreadable MasterData JSON is skipped with a warning on stderr; unrelated valid files
+still contribute wiring.
+
+Both report modes show the summary in Markdown and HTML. SARIF records it as context under
+`runs[0].properties.actionGroupSummaries`, without adding diagnostics. See
+[the findings compatibility contract](action-group-wiring.md) for serialization and command options.
+
 Findings inside DEE files carry a `CrossReference` back to the Orchestration call site that triggers them
 (`CalledByOrchestration`/`NoCallerFound`), and Orchestration findings that are triggered by a DEE call
 carry the reverse link (`CalledByDee`). Findings flagged via `LoopInducedByCaller` (or escalated for the

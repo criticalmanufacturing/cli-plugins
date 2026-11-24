@@ -1,4 +1,3 @@
-using System.Text.Json;
 using Cmf.CLI.Core;
 using Cmf.CLI.Core.Attributes;
 using Cmf.CLI.Core.Commands;
@@ -20,7 +19,7 @@ public class ReportCommand : BaseCommand
     public override void Configure(Command cmd)
     {
         var findingsPathOption = new Option<string>("--findings-path", "Path to a findings JSON file produced by 'scan'") { IsRequired = true };
-        var repositoryRootOption = new Option<string?>("--repository-root", "Repository root, used only to default --report-path");
+        var repositoryRootOption = new Option<string?>("--repository-root", "Repository root for the default report path and MasterData summary fallback for legacy findings");
         var reportPathOption = new Option<string?>("--report-path", "Output path for the report; defaults to Tools/CodeReview/Reports/cm-framework-scan-<mode>-<timestamp>.md under --repository-root");
         var reportModeOption = new Option<ReportMode>("--report-mode", () => ReportMode.Standard, "Standard (severity-grouped) or Detailed (rule backlog) report shape");
         var reportFormatOption = new Option<ReportFormat>("--report-format", () => ReportFormat.Markdown, "Markdown (portable, for PR comments), Html (self-contained browser report), or Sarif (SARIF 2.1.0 log)");
@@ -44,7 +43,7 @@ public class ReportCommand : BaseCommand
     {
         if (stdout)
         {
-            Console.WriteLine(BuildContent(findingsPath, reportMode, reportFormat, title, summary));
+            Console.WriteLine(BuildContent(findingsPath, reportMode, reportFormat, title, summary, repositoryRoot));
         }
         else
         {
@@ -54,7 +53,8 @@ public class ReportCommand : BaseCommand
     }
 
     /// <summary>Reads a findings JSON file and renders it to the requested format, without resolving or writing to any file path.</summary>
-    public static string BuildContent(string findingsPath, ReportMode reportMode, ReportFormat reportFormat, string title, string summary)
+    public static string BuildContent(string findingsPath, ReportMode reportMode, ReportFormat reportFormat, string title, string summary,
+        string? repositoryRoot = null, IReadOnlyList<ActionGroupSummary>? actionGroupSummaries = null)
     {
         if (!File.Exists(findingsPath))
         {
@@ -62,23 +62,30 @@ public class ReportCommand : BaseCommand
         }
 
         var json = File.ReadAllText(findingsPath);
-        var findings = JsonSerializer.Deserialize<List<Finding>>(json) ?? new List<Finding>();
+        var findingsFile = FindingsIo.Deserialize(json);
+        var findings = findingsFile.Findings;
+        actionGroupSummaries ??= findingsFile.ActionGroupSummaries;
+        if (actionGroupSummaries is null && !string.IsNullOrWhiteSpace(repositoryRoot))
+        {
+            actionGroupSummaries = MasterDataActionGroupResolver.Summarize(MasterDataActionGroupResolver.GetActionGroupMap(repositoryRoot));
+        }
 
         return (reportMode, reportFormat) switch
         {
-            (ReportMode.Detailed, ReportFormat.Html) => CmHtmlReportGenerator.BuildDetailedReport(findings, title, summary),
-            (ReportMode.Detailed, ReportFormat.Sarif) => CmSarifReportGenerator.BuildDetailedReport(findings, title, summary),
-            (ReportMode.Detailed, _) => CmReportGenerator.BuildDetailedReport(findings, title, summary),
-            (_, ReportFormat.Html) => CmHtmlReportGenerator.BuildStandardReport(findings, title, summary),
-            (_, ReportFormat.Sarif) => CmSarifReportGenerator.BuildStandardReport(findings, title, summary),
-            _ => CmReportGenerator.BuildStandardReport(findings, title, summary)
+            (ReportMode.Detailed, ReportFormat.Html) => CmHtmlReportGenerator.BuildDetailedReport(findings, title, summary, actionGroupSummaries),
+            (ReportMode.Detailed, ReportFormat.Sarif) => CmSarifReportGenerator.BuildDetailedReport(findings, title, summary, actionGroupSummaries),
+            (ReportMode.Detailed, _) => CmReportGenerator.BuildDetailedReport(findings, title, summary, actionGroupSummaries),
+            (_, ReportFormat.Html) => CmHtmlReportGenerator.BuildStandardReport(findings, title, summary, actionGroupSummaries),
+            (_, ReportFormat.Sarif) => CmSarifReportGenerator.BuildStandardReport(findings, title, summary, actionGroupSummaries),
+            _ => CmReportGenerator.BuildStandardReport(findings, title, summary, actionGroupSummaries)
         };
     }
 
     /// <summary>Shared by the 'report' command and the 'review' one-shot command.</summary>
-    public static string Build(string findingsPath, string? repositoryRoot, string? reportPath, ReportMode reportMode, ReportFormat reportFormat, string title, string summary)
+    public static string Build(string findingsPath, string? repositoryRoot, string? reportPath, ReportMode reportMode, ReportFormat reportFormat, string title, string summary,
+        IReadOnlyList<ActionGroupSummary>? actionGroupSummaries = null)
     {
-        var content = BuildContent(findingsPath, reportMode, reportFormat, title, summary);
+        var content = BuildContent(findingsPath, reportMode, reportFormat, title, summary, repositoryRoot, actionGroupSummaries);
 
         if (string.IsNullOrWhiteSpace(reportPath))
         {
