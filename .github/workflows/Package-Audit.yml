@@ -1,0 +1,112 @@
+name: Package-Audit
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+    working-directory: cmf-audit
+
+jobs:
+  package:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    outputs:
+      version: ${{ steps.prepare.outputs.version }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '8.0.x'
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: cmf-audit/package-lock.json
+      - name: Validate package logic
+        run: node --test scripts/package.test.mjs
+      - name: Read and stamp package version
+        id: prepare
+        run: node scripts/package.mjs prepare
+      - name: Restore, build and test
+        run: |
+          dotnet restore cmf-audit.sln
+          dotnet build cmf-audit.sln -c Release --no-restore
+          dotnet test cmf-audit.sln -c Release --no-build
+      - name: Build platform bundles
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm run build:bundle
+      - name: Pack and verify archive
+        run: |
+          mkdir -p release
+          npm pack ./npm --pack-destination ./release --json > release/pack.json
+          node scripts/package.mjs manifest
+      - uses: actions/upload-artifact@v7
+        with:
+          name: unvalidated-audit-${{ steps.prepare.outputs.version }}
+          path: |
+            cmf-audit/release/*.tgz
+            cmf-audit/release/manifest.json
+            cmf-audit/release/pack.json
+          if-no-files-found: error
+          retention-days: 1
+
+  smoke:
+    needs: package
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2025, macos-15-intel]
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - uses: actions/download-artifact@v8
+        with:
+          name: unvalidated-audit-${{ needs.package.outputs.version }}
+          path: cmf-audit/release
+      - name: Install and check audit commands
+        run: bash scripts/smoke-package.sh "$GITHUB_WORKSPACE/cmf-audit" "${{ needs.package.outputs.version }}" "$GITHUB_SHA"
+
+  ready:
+    needs: [package, smoke]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - uses: actions/download-artifact@v8
+        with:
+          name: unvalidated-audit-${{ needs.package.outputs.version }}
+          path: cmf-audit/release
+      - name: Verify archive
+        run: node scripts/package.mjs archive release "${{ needs.package.outputs.version }}" "$GITHUB_SHA"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: audit-${{ needs.package.outputs.version }}
+          path: |
+            cmf-audit/release/*.tgz
+            cmf-audit/release/manifest.json
+            cmf-audit/release/pack.json
+          if-no-files-found: error
+          retention-days: 30

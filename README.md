@@ -5,6 +5,7 @@ Plugins for the [Critical Manufacturing CLI](https://github.com/criticalmanufact
 | Plugin | Description |
 | --- | --- |
 | [cmf-codereview](cmf-codereview/README.md) | Static analysis of CM customization C# code, with JSON findings and Markdown or HTML reports. |
+| [cmf-audit](cmf-audit/README.md) | Audit CM CLI based projects. |
 
 ## Repository layout
 
