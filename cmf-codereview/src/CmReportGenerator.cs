@@ -226,11 +226,11 @@ public static class CmReportGenerator
             lines.Add("No MasterData DEE wiring found.");
             return;
         }
-        lines.Add("| Action Group | DeeCount | RiskLevel | DEEs | Possible Service Endpoints |");
-        lines.Add("|---|---:|---|---|---|");
+        lines.Add("| Action Group | DeeCount | RiskLevel | Origin | DEEs | Possible Service Endpoints |");
+        lines.Add("|---|---:|---|---|---|---|");
         foreach (var item in summaries)
         {
-            lines.Add($"| {SummaryCell(item.ActionGroup)} | {item.DeeCount} | {item.RiskLevel} | {SummaryCell(string.Join(", ", item.Dees))} | {SummaryCell(string.Join(", ", item.PossibleServiceEndpoints))} |");
+            lines.Add($"| {SummaryCell(item.ActionGroup)} | {item.DeeCount} | {item.RiskLevel} | {item.Origin} | {SummaryCell(string.Join(", ", item.Dees))} | {SummaryCell(string.Join(", ", item.PossibleServiceEndpoints))} |");
         }
         lines.Add("");
     }

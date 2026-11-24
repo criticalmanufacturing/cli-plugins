@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Cmf.Cli.Plugin.CodeReview.Enums;
 using Cmf.Cli.Plugin.CodeReview.Models;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace Cmf.Cli.Plugin.CodeReview;
 
@@ -90,7 +91,9 @@ public static class MasterDataActionGroupResolver
     public static List<ActionGroupSummary> Summarize(
         IReadOnlyDictionary<string, List<ActionGroupInfo>> actionGroupMap,
         MethodCallGraph? callGraph = null,
-        IReadOnlyDictionary<string, ServiceEndpointInfo>? serviceEndpointMap = null) =>
+        IReadOnlyDictionary<string, ServiceEndpointInfo>? serviceEndpointMap = null,
+        IReadOnlySet<string>? declaredTypeNames = null,
+        IReadOnlySet<string>? declaredMethodNames = null) =>
         actionGroupMap.SelectMany(pair => pair.Value.Select(info => (Dee: pair.Key, Info: info)))
             .GroupBy(pair => pair.Info.ActionGroup, StringComparer.Ordinal)
             .Select(group =>
@@ -108,11 +111,71 @@ public static class MasterDataActionGroupResolver
                         3 => ActionGroupRiskLevel.High,
                         _ => ActionGroupRiskLevel.Critical
                     },
-                    PossibleServiceEndpoints = ResolveEndpoints(group.Key, callGraph, serviceEndpointMap)
+                    PossibleServiceEndpoints = ResolveEndpoints(group.Key, callGraph, serviceEndpointMap),
+                    Origin = ClassifyOrigin(group.Key, declaredTypeNames, declaredMethodNames)
                 };
             })
             .OrderByDescending(summary => summary.DeeCount)
             .ThenBy(summary => summary.ActionGroup, StringComparer.Ordinal).ToList();
+
+    /// <summary>Type names declared in the repository's Both scope, using the shared name collector.</summary>
+    public static HashSet<string> CollectDeclaredTypeNames(string repositoryRoot, CodeReviewFileCache? fileCache = null) =>
+        CollectDeclaredNames(repositoryRoot, fileCache).TypeNames;
+
+    /// <summary>Method names declared in the repository's Both scope, using the shared name collector.</summary>
+    public static HashSet<string> CollectDeclaredMethodNames(string repositoryRoot, CodeReviewFileCache? fileCache = null) =>
+        CollectDeclaredNames(repositoryRoot, fileCache).MethodNames;
+
+    /// <summary>
+    /// Collects both name sets with one cached syntax-tree traversal per source file.
+    /// Constants holders are excluded before either set is populated: their type/method names
+    /// describe platform operations and are not evidence of a customer implementation.
+    /// </summary>
+    public static (HashSet<string> TypeNames, HashSet<string> MethodNames) CollectDeclaredNames(
+        string repositoryRoot, CodeReviewFileCache? fileCache = null)
+    {
+        fileCache ??= new CodeReviewFileCache();
+        var files = CodeReviewPaths.GetFiles(repositoryRoot, CodeReviewPaths.ResolveRoots(repositoryRoot, ReviewScope.Both))
+            .Where(file => !CodeReviewPaths.IsConstantsFile(file));
+        var typeNames = new HashSet<string>(StringComparer.Ordinal);
+        var methodNames = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var file in files)
+        {
+            foreach (var node in fileCache.Get(file).Root.DescendantNodes())
+            {
+                switch (node)
+                {
+                    case TypeDeclarationSyntax type:
+                        typeNames.Add(type.Identifier.Text);
+                        break;
+                    case MethodDeclarationSyntax method:
+                        methodNames.Add(method.Identifier.Text);
+                        break;
+                }
+            }
+        }
+        return (typeNames, methodNames);
+    }
+
+    // Preserve ADO's lifecycle fallback guard when bringing Origin classification to GitHub.
+    // A genuine declared type still wins even when its method is one of these generic verbs.
+    private static readonly HashSet<string> GenericBaseMethodNames = new(StringComparer.Ordinal)
+    {
+        "Create", "CreateEntity", "CreateVersion", "Save", "Terminate", "Load", "TryLoad", "LoadRelations",
+        "RemoveRelations", "AddRelations", "AddRelatedRelations", "RemoveRelatedRelations", "ObjectExists",
+        "GetVersions", "Delete", "Clone", "ToString", "Equals", "GetHashCode", "GetType"
+    };
+
+    private static ActionGroupOrigin ClassifyOrigin(string actionGroup,
+        IReadOnlySet<string>? declaredTypeNames, IReadOnlySet<string>? declaredMethodNames)
+    {
+        if (declaredTypeNames is null) return ActionGroupOrigin.Unknown;
+        var segments = actionGroup.Split('.');
+        if (segments.Length >= 3 && declaredTypeNames.Contains(segments[^3])) return ActionGroupOrigin.Custom;
+        if (segments.Length >= 2 && !GenericBaseMethodNames.Contains(segments[^2]) &&
+            declaredMethodNames is not null && declaredMethodNames.Contains(segments[^2])) return ActionGroupOrigin.Custom;
+        return ActionGroupOrigin.Oob;
+    }
 
     private static List<string> ResolveEndpoints(string group, MethodCallGraph? graph,
         IReadOnlyDictionary<string, ServiceEndpointInfo>? endpoints)

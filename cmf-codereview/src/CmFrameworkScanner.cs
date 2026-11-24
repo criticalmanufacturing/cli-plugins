@@ -296,8 +296,11 @@ public static class CmFrameworkScanner
         var callGraph = CmCallGraphBuilder.BuildCallGraph(repositoryRoot, fileCache);
         Mark("call graph");
 
+        var (declaredTypeNames, declaredMethodNames) = MasterDataActionGroupResolver.CollectDeclaredNames(repositoryRoot, fileCache);
+        Mark("declared type/method names");
         actionGroupSummaries = MasterDataActionGroupResolver.Summarize(
-            MasterDataActionGroupResolver.GetActionGroupMap(repositoryRoot), callGraph, serviceEndpointMap);
+            MasterDataActionGroupResolver.GetActionGroupMap(repositoryRoot), callGraph, serviceEndpointMap,
+            declaredTypeNames, declaredMethodNames);
         Mark("action group summary");
 
         // Await the reflection resolve started up front. If the parse phases above took longer than the
