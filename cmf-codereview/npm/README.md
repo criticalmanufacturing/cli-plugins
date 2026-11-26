@@ -2,11 +2,23 @@
 
 ## Installing
 
-```
+Follow the [RepoFlow installation guide](https://github.com/criticalmanufacturing/cli-plugins/blob/main/README.md#install-code-reviewer-from-repoflow)
+for Node.js/npm prerequisites, registry setup, optional authentication, and
+selecting a published version.
+
+```sh
 npm install --global @criticalmanufacturing/codereview --registry https://cm-collaborationhub.io/api/npm/2305290000030000002/dev/
 ```
 
-After installation, a new command `codereview` will be available in the [cmf-cli](https://github.com/criticalmanufacturing/cli) tool.
+Verify the installation:
+
+```sh
+cmf-codereview --version
+```
+
+The plugin is available directly as `cmf-codereview`. If the
+[CM CLI](https://github.com/criticalmanufacturing/cli) is installed, it is also
+available as `cmf codereview`.
 
 ## Commands
 
