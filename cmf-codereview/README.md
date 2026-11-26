@@ -24,15 +24,21 @@ and release commands. The plugin uses dotnet and npm directly.
 
 ## Installation
 
-Once published, install like any other CM CLI plugin:
+Follow the [RepoFlow installation guide](../README.md#install-code-reviewer-from-repoflow)
+for Node.js/npm prerequisites, registry setup, optional authentication, version
+selection, and verification. The package includes self-contained Windows, Linux,
+and Intel macOS x64 executables; installing it does not require a .NET SDK.
+
+To install globally from the RepoFlow registry:
 
 ```bash
 npm install --global @criticalmanufacturing/codereview --registry https://cm-collaborationhub.io/api/npm/2305290000030000002/dev/
 ```
 
-After installation, `cmf codereview` is available alongside your other `cmf` commands.
+Verify the installation with `cmf-codereview --version`. If the CM CLI is installed,
+`cmf codereview` is also available alongside your other `cmf` commands.
 
-For local development, or until the npm package is published, build and install from source instead:
+For local development, build and install from source instead:
 
 ```bash
 dotnet pack src/cmf-codereview.csproj -c Release -o ./nupkg

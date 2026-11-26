@@ -6,6 +6,85 @@ Plugins for the [Critical Manufacturing CLI](https://github.com/criticalmanufact
 | --- | --- |
 | [cmf-codereview](cmf-codereview/README.md) | Static analysis of CM customization C# code, with JSON findings and Markdown or HTML reports. |
 
+## Install Code Reviewer from RepoFlow
+
+The Code Reviewer npm package is `@criticalmanufacturing/codereview`, hosted in
+the Collaboration Hub dev registry on RepoFlow.
+
+### 1. Install Node.js and npm
+
+Install the LTS version of [Node.js](https://nodejs.org/), which includes npm,
+and confirm both commands are available:
+
+```sh
+node --version
+npm --version
+```
+
+The package includes self-contained executables for Windows x64, Linux x64, and
+Intel macOS x64. A .NET SDK is only needed when building from source.
+
+### 2. Configure the registry (optional)
+
+RepoFlow's setup command sets the default npm registry for your user:
+
+```sh
+npm config set registry https://cm-collaborationhub.io/api/npm/2305290000030000002/dev/
+```
+
+This applies to all packages without a separate scope registry. You can skip
+this step because the commands below specify `--registry` explicitly.
+
+### 3. Authenticate (if required)
+
+If the registry requires authentication and you have not already configured
+credentials, run RepoFlow's login command:
+
+```sh
+npm login --registry https://cm-collaborationhub.io/api/npm/2305290000030000002/dev/ --auth-type legacy
+```
+
+Enter the credentials provided for this RepoFlow registry when prompted.
+
+### 4. Download and install Code Reviewer
+
+Install the package globally to make `cmf-codereview` available on your PATH.
+You can run this command from any directory:
+
+```sh
+npm install --global @criticalmanufacturing/codereview --registry https://cm-collaborationhub.io/api/npm/2305290000030000002/dev/
+```
+
+This selects the registry's `latest` distribution tag. To select a specific
+published version, list the available versions and install one explicitly:
+
+```sh
+npm view @criticalmanufacturing/codereview versions --json --registry https://cm-collaborationhub.io/api/npm/2305290000030000002/dev/
+npm install --global "@criticalmanufacturing/codereview@<version>" --registry https://cm-collaborationhub.io/api/npm/2305290000030000002/dev/
+```
+
+Replace `<version>` with a version returned by `npm view`. A release published
+only under `next` must be selected by its version or with
+`@criticalmanufacturing/codereview@next`.
+
+### 5. Verify the installation
+
+```sh
+cmf-codereview --version
+cmf-codereview --help
+```
+
+To scan a customization repository and generate a report, replace the example
+path with your repository's path:
+
+```sh
+cmf-codereview review --repository-root /path/to/customization
+```
+
+If the [CM CLI](https://github.com/criticalmanufacturing/cli) is installed, you
+can also run `cmf codereview`. See the [command reference](cmf-codereview/docs/commands.md)
+for scan and report options.
+
 ## Repository layout
 
 Each plugin has its own source, tests, documentation, and npm package. Run the
@@ -13,7 +92,7 @@ commands below from `cmf-codereview/` unless otherwise noted. `NuGet.Config` at 
 repository root supplies the nuget.org package feed. `.versionrc.json` supplies shared
 changelog formatting and GitHub links. Build and release commands use dotnet and npm.
 
-## Prerequisites
+## Development prerequisites
 
 - A .NET 8 SDK compatible with `cmf-codereview/global.json`.
 - Node.js and npm for packaging and release scripts.
