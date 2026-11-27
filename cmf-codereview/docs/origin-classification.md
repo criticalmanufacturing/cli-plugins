@@ -16,9 +16,6 @@ Similar directory names and a file named `Constants.cs` are not excluded. A genu
 implementation outside Constants still contributes evidence. Ordinary rules continue to analyze
 Constants files.
 
-Generic lifecycle method names alone do not establish custom ownership. The full guard and its
-limitations are documented in [the rule reference](rules.md#action-group-origin).
-
 ## Retaining Origin in reports
 
 ```powershell
