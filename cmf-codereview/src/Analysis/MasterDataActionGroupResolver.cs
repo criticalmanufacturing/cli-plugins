@@ -157,7 +157,7 @@ public static class MasterDataActionGroupResolver
         return (typeNames, methodNames);
     }
 
-    // Preserve ADO's lifecycle fallback guard when bringing Origin classification to GitHub.
+    // Generic lifecycle names are insufficient evidence that an Action Group is custom.
     // A genuine declared type still wins even when its method is one of these generic verbs.
     private static readonly HashSet<string> GenericBaseMethodNames = new(StringComparer.Ordinal)
     {

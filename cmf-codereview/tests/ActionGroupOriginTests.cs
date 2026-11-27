@@ -189,6 +189,23 @@ public class ActionGroupOriginTests : IDisposable
         using var report = JsonDocument.Parse(ReportCommand.BuildContent(path, ReportMode.Standard, ReportFormat.Sarif, "Review", "Summary", _fixture.Root));
         var summary = Assert.Single(report.RootElement.GetProperty("runs")[0].GetProperty("properties").GetProperty("actionGroupSummaries").EnumerateArray());
         Assert.Equal("Unknown", summary.GetProperty("Origin").GetString());
+        var note = report.RootElement.GetProperty("runs")[0].GetProperty("properties").GetProperty("actionGroupSummaryNote").GetString();
+        Assert.Contains("Origin remains Unknown", note);
+        Assert.Contains("declaration indexes are unavailable", note);
+    }
+
+    [Theory]
+    [InlineData(ReportMode.Standard, ReportFormat.Markdown)]
+    [InlineData(ReportMode.Detailed, ReportFormat.Markdown)]
+    [InlineData(ReportMode.Standard, ReportFormat.Html)]
+    [InlineData(ReportMode.Detailed, ReportFormat.Html)]
+    public void LegacyReport_ExplainsUnknownOriginInHumanReadableFormats(ReportMode mode, ReportFormat format)
+    {
+        var path = _fixture.Write("legacy.json", "[]");
+        var report = ReportCommand.BuildContent(path, mode, format, "Review", "Summary", _fixture.Root);
+        Assert.Contains("Origin remains Unknown", report);
+        Assert.Contains("declaration indexes are unavailable", report);
+        Assert.Contains("scan --include-action-group-summary", report);
     }
 
     [Fact]

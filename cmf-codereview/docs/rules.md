@@ -229,11 +229,11 @@ restricted to changed files or a narrower scope. A matching Action Group class-n
 module name differs from its C# type name. With a declared-type index but no match, the result is
 `Oob`. This is source-name evidence, not a semantic proof that a type lives in a platform assembly.
 Without a declared-type index, including legacy report fallback, the result remains `Unknown`.
+Generated reports explain unavailable context and recommend enriched findings or `review`.
 
-**Constants-folder exclusion (#47926).** A confirmed customization-repository case has constant-holder
-classes named `MaterialManagementOrchestration`, `ExceptionManagementOrchestration` and `SmartTables`
-under `Cmf.Custom.Common/Constants`. Those names describe real platform APIs; they do not implement
-them. Counting the holders as implementations made platform Action Groups appear `Custom`.
+**Constants-folder exclusion.** A metadata holder under `Common/Constants` can share a type or helper
+method name with a real platform implementation. Those declarations describe APIs rather than
+implementing them; counting them as implementation evidence would incorrectly imply `Custom`.
 
 An exact, case-sensitive `Constants` directory segment is excluded from **both** declared type and
 method indexes before syntax traversal. Windows, Unix and mixed separators are supported, including
@@ -243,18 +243,16 @@ applies only to Origin evidence; normal rules still analyze Constants files.
 
 `CollectDeclaredNames` collects both sets in one cached traversal per eligible file. The public
 `CollectDeclaredTypeNames` and `CollectDeclaredMethodNames` wrappers remain available, while the
-scanner calls the combined collector once. This includes the development refinement absorbed from
-Removed duplicate #47935. [Origin validation evidence](origin-classification.md) records the
-regression, fresh timings and output comparisons.
+scanner calls the combined collector once. [Origin classification](origin-classification.md) explains
+the evidence and how to retain it in reports.
 
-**Excluding generic BusinessObject lifecycle verbs.** The port preserves the ADO method-fallback
-guard for `Create`, `CreateEntity`, `CreateVersion`, `Save`, `Terminate`, `Load`, `TryLoad`,
+**Excluding generic BusinessObject lifecycle verbs.** The method-fallback guard excludes
+`Create`, `CreateEntity`, `CreateVersion`, `Save`, `Terminate`, `Load`, `TryLoad`,
 `LoadRelations`, `RemoveRelations`, `AddRelations`, `AddRelatedRelations`, `RemoveRelatedRelations`,
 `ObjectExists`, `GetVersions`, `Delete`, `Clone`, `ToString`, `Equals`, `GetHashCode` and `GetType`.
-An unrelated serializer factory's `Create()` method was a confirmed source of platform Action Groups
-being incorrectly classified as `Custom`. The guard restricts method-name fallback only: a genuine
-declared type remains `Custom` even when its method is a lifecycle verb. This preserves the source
-classifier while implementing #47926; #47927 retains its own review and acceptance state.
+A coincidental `Create()` method on an unrelated factory is insufficient evidence for custom
+ownership. The guard restricts method-name fallback only: a genuine declared type remains `Custom`
+even when its method is a lifecycle verb.
 
 Findings inside DEE files carry a `CrossReference` back to the Orchestration call site that triggers them
 (`CalledByOrchestration`/`NoCallerFound`), and Orchestration findings that are triggered by a DEE call
