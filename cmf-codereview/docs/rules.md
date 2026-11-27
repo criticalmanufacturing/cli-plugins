@@ -409,3 +409,17 @@ scalar native-value wrapper. Source-defined getter overrides must also prove tha
 Other attributes, unknown types, differing value types and relation/FK reads are excluded. Missing
 semantic context does not produce speculative guidance. The catalog is deliberately limited to these
 verified type/property combinations; it does not recommend typed navigation for foreign-key reads.
+
+### LoadThenNativeValueOnly
+
+A resolved entity `Load()` followed exclusively by `GetNativeValue<T>` uses of that same receiver
+in the enclosing callable produces a review finding: Medium outside loops, High in a loop and
+Critical for nested or caller-induced loops using the existing loop weighting. Verify that the values
+are already available before removing the load; otherwise source them from an already-loaded collection.
+Other property/method use, no native read, aliases, escapes, reassignment, nested callable captures,
+unresolved types and invocation-based receivers are excluded. Analysis is local to the callable and
+does not prove runtime loaded state. A handler also reading MaintenanceActivities is a negative case.
+
+A preceding Name/Id/DefinitionId assignment is excluded: loading by a lookup key can be necessary
+to populate native values, even when the only later read is GetNativeValue. This rule identifies a
+bounded review pattern; it does not prove that the native-value store is already populated.
