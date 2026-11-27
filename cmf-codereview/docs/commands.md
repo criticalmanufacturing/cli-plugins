@@ -133,6 +133,7 @@ Legacy findings files do not retain the scan's call graph. Reports state that po
 unavailable; empty fallback lists are not evidence that a group has no callers. Use
 `scan --include-action-group-summary` or `review` to retain scan context. SARIF carries the same
 explanation in `runs[0].properties.actionGroupSummaryNote`.
+Origin also remains `Unknown` for legacy findings because declaration indexes were not recorded.
 
 **Examples**
 

@@ -47,6 +47,9 @@ public static class CodeReviewPaths
     private static readonly Regex ProcessRulesSegmentRegex =
         new(@"Cmf\.[^\\/]+\.Data[\\/](?:Cmf\.[^\\/]+\.Data\.Packages[\\/])?DEEs[\\/]ProcessRules[\\/]", RegexOptions.Compiled);
 
+    private static readonly Regex ConstantsSegmentRegex =
+        new(@"(?:^|[\\/])Constants[\\/]", RegexOptions.Compiled);
+
     /// <summary>Returns the default relative folder roots for the given scope (DEEs, Orchestration, or Both), for this repository.</summary>
     public static string[] ResolveRoots(string repositoryRoot, ReviewScope scope)
     {
@@ -324,6 +327,9 @@ public static class CodeReviewPaths
 
     /// <summary>True if the file sits under the DEEs/ProcessRules root -- one-time migration code, exempt from a couple of otherwise-real-time-only rules.</summary>
     public static bool IsOneTimeMigrationFile(string path) => ProcessRulesSegmentRegex.IsMatch(path);
+
+    /// <summary>True for an exact Constants directory segment, with either path separator.</summary>
+    public static bool IsConstantsFile(string path) => ConstantsSegmentRegex.IsMatch(path);
 
     /// <summary>True if the file is an extension-method file by folder or filename convention.</summary>
     public static bool IsExtensionFile(string path) =>

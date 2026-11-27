@@ -68,7 +68,7 @@ public class ReportCommand : BaseCommand
         string? contextNote = null;
         if (actionGroupSummaries is null)
         {
-            contextNote = "Action Group scan context was not recorded in this findings file. Possible Service Endpoints are unavailable; empty endpoint lists do not mean that no endpoint can reach a group. " +
+            contextNote = "Action Group scan context was not recorded in this findings file. Origin remains Unknown because declaration indexes are unavailable. Possible Service Endpoints are unavailable; empty endpoint lists do not mean that no endpoint can reach a group. " +
                 "Use scan --include-action-group-summary or review to retain scan context. Supplying --repository-root reconstructs wiring counts from current MasterData only.";
             if (!string.IsNullOrWhiteSpace(repositoryRoot))
             {

@@ -210,16 +210,41 @@ names and possible endpoints sort ordinally.
 call graph backwards from the group's method segment. This is not runtime observation or proof of
 reachability through compiled platform code. It retains the existing endpoint resolver's
 `Cmf.Custom.Business/Cmf.Custom.Services` controller discovery limitation. Legacy report fallback
-without a scan graph leaves endpoint lists empty. `Origin` remains `Unknown` in this foundation.
+without a scan graph leaves endpoint lists empty.
 
-This summary models JSON additions. Process Rule removals, origin classification, nested catalogs,
-per-finding Action Group fields and trace-span identifiers are not resolved by this summary.
+This summary models JSON additions. Process Rule removals, nested catalogs, per-finding Action Group
+fields and trace-span identifiers are not resolved by this summary.
 Malformed/unreadable MasterData JSON is skipped with a warning on stderr; unrelated valid files
 still contribute wiring.
 
 Both report modes show the summary in Markdown and HTML. SARIF records it as context under
 `runs[0].properties.actionGroupSummaries`, without adding diagnostics. See
 [the findings compatibility contract](action-group-wiring.md) for serialization and command options.
+
+### Action Group Origin
+
+`Origin` uses declared names from the repository's full Both scope, including when findings are
+restricted to changed files or a narrower scope. A matching Action Group class-name segment gives
+`Custom`; otherwise a matching distinctive method-name segment can give `Custom` when the runtime
+module name differs from its C# type name. With a declared-type index but no match, the result is
+`Oob`. This is source-name evidence, not a semantic proof that a type lives in a platform assembly.
+Without a declared-type index, including legacy report fallback, the result remains `Unknown`.
+Generated reports explain unavailable context and recommend enriched findings or `review`.
+
+**Constants-folder exclusion.** A metadata holder under `Common/Constants` can share a type or helper
+method name with a real platform implementation. Those declarations describe APIs rather than
+implementing them; counting them as implementation evidence would incorrectly imply `Custom`.
+
+An exact, case-sensitive `Constants` directory segment is excluded from **both** declared type and
+method indexes before syntax traversal. Windows, Unix and mixed separators are supported, including
+a relative path starting with `Constants/`. `Constants.cs`, `MyConstants` and `ConstantsHelpers` do
+not match. A genuine same-named implementation elsewhere still contributes evidence. This exclusion
+applies only to Origin evidence; normal rules still analyze Constants files.
+
+`CollectDeclaredNames` collects both sets in one cached traversal per eligible file. The public
+`CollectDeclaredTypeNames` and `CollectDeclaredMethodNames` wrappers remain available, while the
+scanner calls the combined collector once. [Origin classification](origin-classification.md) explains
+the evidence and how to retain it in reports.
 
 Findings inside DEE files carry a `CrossReference` back to the Orchestration call site that triggers them
 (`CalledByOrchestration`/`NoCallerFound`), and Orchestration findings that are triggered by a DEE call

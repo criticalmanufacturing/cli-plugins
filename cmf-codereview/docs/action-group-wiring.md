@@ -23,7 +23,8 @@ cmf-codereview report --findings-path findings.json --report-format Html --repor
 
 The enriched object has `Findings` (the same array) and `ActionGroupSummaries` (the scan's resolved
 summary array). Each summary includes `ActionGroup`, `DeeCount`, `RiskLevel`, `Dees`,
-`PossibleServiceEndpoints` and `Origin`. Risk and origin use enum names. `FindingsIo.Deserialize`
+`PossibleServiceEndpoints` and `Origin`. Origin classification and its Constants exclusion are
+defined in [rules.md](rules.md#action-group-origin). Risk and origin use enum names. `FindingsIo.Deserialize`
 accepts both top-level shapes and existing numeric severity values. Invalid top-level input or a
 missing/null/non-array `Findings` member fails instead of silently producing a clean report.
 

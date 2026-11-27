@@ -144,11 +144,11 @@ public static class CmHtmlReportGenerator
             body.Append("<p>No MasterData DEE wiring found.</p>");
             return;
         }
-        body.Append("<div class=\"tablewrap\"><table><thead><tr><th>Action Group</th><th>DeeCount</th><th>RiskLevel</th><th>DEEs</th><th>Possible Service Endpoints</th></tr></thead><tbody>");
+        body.Append("<div class=\"tablewrap\"><table><thead><tr><th>Action Group</th><th>DeeCount</th><th>RiskLevel</th><th>Origin</th><th>DEEs</th><th>Possible Service Endpoints</th></tr></thead><tbody>");
         foreach (var item in summaries)
         {
             body.Append("<tr><td>").Append(Enc(item.ActionGroup)).Append("</td><td>").Append(item.DeeCount)
-                .Append("</td><td>").Append(Enc(item.RiskLevel.ToString())).Append("</td><td>")
+                .Append("</td><td>").Append(Enc(item.RiskLevel.ToString())).Append("</td><td>").Append(Enc(item.Origin.ToString())).Append("</td><td>")
                 .Append(Enc(string.Join(", ", item.Dees))).Append("</td><td>")
                 .Append(Enc(string.Join(", ", item.PossibleServiceEndpoints))).Append("</td></tr>");
         }
