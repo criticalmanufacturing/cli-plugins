@@ -15,7 +15,7 @@ public static class MasterDataActionGroupResolver
     /// Recognized Process Rule removals are authoritative, including when a later JSON file re-adds a pair.
     /// </summary>
     public static Dictionary<string, List<ActionGroupInfo>> GetActionGroupMap(
-        string repositoryRoot, IEnumerable<string>? masterDataRoots = null, CodeReviewFileCache? fileCache = null)
+        string repositoryRoot, IEnumerable<string>? masterDataRoots = null, CodeReviewFileCache? fileCache = null, bool parallelParsing = true)
     {
         var map = new Dictionary<string, Dictionary<string, ActionGroupInfo>>(StringComparer.Ordinal);
         var files = (masterDataRoots ?? CodeReviewPaths.DiscoverMasterDataRoots(repositoryRoot))
@@ -28,11 +28,19 @@ public static class MasterDataActionGroupResolver
                 .SelectMany(entry => Directory.EnumerateFiles(entry.Directory, "*.json")
                     .Select(file => (File: file, entry.Version, RelativePath: CodeReviewPaths.GetRelativePath(repositoryRoot, file).Replace('\\', '/')))))
             .OrderBy(entry => entry.Version)
-            .ThenBy(entry => entry.RelativePath, StringComparer.Ordinal);
+            .ThenBy(entry => entry.RelativePath, StringComparer.Ordinal).ToArray();
 
-        foreach (var entry in files)
+        // Parse independently, then merge in globally sorted order to retain numeric precedence.
+        var parseWatch = Environment.GetEnvironmentVariable("CODEREVIEW_PROFILE") == "1"
+            ? System.Diagnostics.Stopwatch.StartNew() : null;
+        var parsed = parallelParsing
+            ? files.AsParallel().AsOrdered().Select(entry => (entry.RelativePath, Entries: ReadEntries(entry.File))).ToArray()
+            : files.Select(entry => (entry.RelativePath, Entries: ReadEntries(entry.File))).ToArray();
+        if (parseWatch is not null)
+            Console.Error.WriteLine($"profile: MasterData JSON parse: {parseWatch.Elapsed.TotalMilliseconds:F2}ms");
+        foreach (var entry in parsed)
         {
-            foreach (var (action, group) in ReadEntries(entry.File))
+            foreach (var (action, group) in entry.Entries)
             {
                 if (!map.TryGetValue(action, out var groups))
                 {
