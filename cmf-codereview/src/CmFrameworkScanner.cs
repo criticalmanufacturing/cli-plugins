@@ -176,6 +176,7 @@ public static class CmFrameworkScanner
             "No bulk alternative exists for this Orchestration method at the platform level -- review whether the loop's iteration count can be reduced, or whether the operation is needed for every element.",
             "No bulk alternative exists for this Orchestration method at the platform level -- review whether the caller's loop can be narrowed so this method runs for fewer elements."),
         new NativeValueInsteadOfPropertyRule(),
+        new LoadThenNativeValueOnlyRule(),
         new LevelsToLoadGreaterThanOneRule(),
         new LoadDataWithoutFiltersRule(),
         new DirectEntityInstantiationRule(),
