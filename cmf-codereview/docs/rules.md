@@ -386,3 +386,10 @@ cover the update cannot satisfy it. An existence guard returning before the upda
 The reference checks and PR deployment-folder diagnostics are described in
 [pr-validation.md](pr-validation.md), including their default severities, required metadata,
 historical-folder exclusions, and CLI/pipeline inputs.
+
+ExcessiveLazyLoading recognizes a same-block, unconditional collection `LoadReference`, literal-array
+`LoadReferences` or `LoadRelations` before foreach. The same reference and collection must match;
+LoadRelations covers any reference. Filtering/ordering chains such as `collection.Where(...)` retain
+identity. Reassignment, aliasing, intervening calls/mutations, conditional preloads, local-function or
+lambda boundaries and unrecognized collection transformations retain the finding. The check does not
+follow values between methods or infer runtime state.

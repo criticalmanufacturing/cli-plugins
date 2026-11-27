@@ -197,7 +197,8 @@ public static class CmFrameworkScanner
             extraCondition: (context, access, line) =>
                 ((context.LoopState.Lines.Contains(line) && !context.LoopState.SingleExecutionLines.Contains(line)) ||
                  access.Ancestors().Any(a => a is LambdaExpressionSyntax or ArrowExpressionClauseSyntax)) &&
-                CmReceiverVariance.ReceiverVariesPerIteration(access)),
+                CmReceiverVariance.ReceiverVariesPerIteration(access) &&
+                !CmPreloadAnalyzer.IsPreloadedBeforeLoop(access)),
         new ConfigGetConfigRule(),
         new GetConfigInsteadOfTryGetConfigRule(),
         new ConfigWriteInHotPathRule(),
