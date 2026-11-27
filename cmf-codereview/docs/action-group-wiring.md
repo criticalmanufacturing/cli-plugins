@@ -45,3 +45,13 @@ For `scan --report-format Sarif`, `--include-action-group-summary` adds
 `runs[0].properties.actionGroupSummaries`; default scan SARIF stays unchanged. `review` and `report`
 include summaries in SARIF when available. Summary risk never creates SARIF results or changes
 diagnostic severity. Markdown and HTML show the same counts in both Standard and Detailed modes.
+
+### Recognized wiring removals
+
+Versioned Process Rule scripts can remove all groups with `RemoveAction` and
+`IsToRemoveAllVersions = true`, or `RemoveActionGroups(action.ActionGroupActions)`.
+A collection filtered with `ActionGroup.Name.Equals("Group")` removes one group.
+Names must resolve to literals or literal local variables, with exactly one distinct DEE name
+in the script. Ambiguous, helper-generated or dynamic names are outside this bounded analysis.
+Removal wins regardless of version order, including a subsequent JSON re-add; deployment history
+is not replayed. Ordinary DEEs outside ProcessRules are not removal sources.

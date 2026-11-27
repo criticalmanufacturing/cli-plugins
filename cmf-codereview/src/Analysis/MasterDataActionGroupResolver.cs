@@ -12,10 +12,10 @@ public static class MasterDataActionGroupResolver
     /// Accumulates every wiring. Only an exact repeated pair is replaced: the highest numeric version
     /// wins globally across roots, then the ordinally greatest repository-relative path for a tie.
     /// Optional roots allow callers to supply an explicit MasterData root set in any order.
-    /// Only JSON additions are modeled; Process Rule removals are not resolved here.
+    /// Recognized Process Rule removals are authoritative, including when a later JSON file re-adds a pair.
     /// </summary>
     public static Dictionary<string, List<ActionGroupInfo>> GetActionGroupMap(
-        string repositoryRoot, IEnumerable<string>? masterDataRoots = null)
+        string repositoryRoot, IEnumerable<string>? masterDataRoots = null, CodeReviewFileCache? fileCache = null)
     {
         var map = new Dictionary<string, Dictionary<string, ActionGroupInfo>>(StringComparer.Ordinal);
         var files = (masterDataRoots ?? CodeReviewPaths.DiscoverMasterDataRoots(repositoryRoot))
@@ -41,6 +41,17 @@ public static class MasterDataActionGroupResolver
                 }
 
                 groups[group] = new ActionGroupInfo { ActionGroup = group, SourceLocation = entry.RelativePath };
+            }
+        }
+
+        foreach (var removal in DeeActionGroupRemovalScanner.ScanRemovals(repositoryRoot, fileCache))
+        {
+            if (!map.TryGetValue(removal.Dee, out var groups)) continue;
+            if (removal.ActionGroup is null) map.Remove(removal.Dee);
+            else
+            {
+                groups.Remove(removal.ActionGroup);
+                if (groups.Count == 0) map.Remove(removal.Dee);
             }
         }
 

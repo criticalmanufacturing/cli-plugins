@@ -218,7 +218,7 @@ public static class CmFrameworkScanner
     /// <summary>
     /// Runs every registered rule over the given repository/roots and returns every finding, sorted by severity then file/line.
     /// When <paramref name="changedFiles"/> is given (relative or absolute paths, e.g. from a git diff), cross-reference and
-    /// loop-exposure context is still built from the whole repository, but only findings on those files are returned —
+    /// loop-exposure context is still built from the whole repository, but only findings on those files are returned â€”
     /// useful for CI gates that should only report on files actually touched by a change.
     /// Per-project configuration (<paramref name="settings"/>, or <c>.codereview.json</c> at the repository root when null)
     /// can disable rules, override severities, and add declarative custom rules; findings matching the repository's
@@ -299,7 +299,7 @@ public static class CmFrameworkScanner
         var (declaredTypeNames, declaredMethodNames) = MasterDataActionGroupResolver.CollectDeclaredNames(repositoryRoot, fileCache);
         Mark("declared type/method names");
         actionGroupSummaries = MasterDataActionGroupResolver.Summarize(
-            MasterDataActionGroupResolver.GetActionGroupMap(repositoryRoot), callGraph, serviceEndpointMap,
+            MasterDataActionGroupResolver.GetActionGroupMap(repositoryRoot, fileCache: fileCache), callGraph, serviceEndpointMap,
             declaredTypeNames, declaredMethodNames);
         Mark("action group summary");
 
