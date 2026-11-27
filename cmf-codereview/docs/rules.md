@@ -371,3 +371,7 @@ An absent catalog entry means no known edge, not proof of no nested activity.
 suffix. Pre and Post remain distinct: a transaction spans the Pre DEEs, the API operation and the
 Post DEEs, so either stage can extend its duration. Use the exact identifier for external correlation;
 static catalog or endpoint reachability alone does not prove that a span occurred at runtime.
+
+MasterData files are parsed independently across available processors, then merged in the globally
+ordered version/path sequence. Parallel parsing preserves pair selection, stable findings and source
+locations, including across multiple MasterData roots.
