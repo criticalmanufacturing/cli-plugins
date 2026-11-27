@@ -32,8 +32,8 @@ jobs:
           node-version: '24'
           package-manager-cache: false
 
-      - name: Test package validation
-        run: node --test scripts/package.test.mjs
+      - name: Test package validation and catalog discovery
+        run: node --test scripts/package.test.mjs scripts/discovery.test.mjs
 
       - name: Restore dependencies of cmf-codereviewer
         run: dotnet restore cmf-codereview.sln
