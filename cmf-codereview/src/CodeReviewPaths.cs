@@ -71,6 +71,16 @@ public static class CodeReviewPaths
         contentType.Equals("ProcessRulesPre", StringComparison.OrdinalIgnoreCase) ||
         contentType.Equals("ProcessRulesPost", StringComparison.OrdinalIgnoreCase);
 
+    /// <summary>Existing literal MasterData prefixes from Data package manifests, in stable path order.</summary>
+    public static string[] DiscoverMasterDataRoots(string repositoryRoot) =>
+        DiscoverDataPackageContent(repositoryRoot)
+            .Where(content => content.ContentType.Equals("MasterData", StringComparison.OrdinalIgnoreCase))
+            .Select(content => Path.Combine(content.Directory, ExtractLiteralDirectory(content.Source)))
+            .Where(Directory.Exists)
+            .Select(path => GetRelativePath(repositoryRoot, path))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(path => path, StringComparer.Ordinal).ToArray();
+
     private static ResolvedRoots Discover(string repositoryRoot)
     {
         var fullRoot = Path.GetFullPath(repositoryRoot);

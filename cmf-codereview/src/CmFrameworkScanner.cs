@@ -225,7 +225,12 @@ public static class CmFrameworkScanner
     /// <c>.codereview.baseline.json</c> (when present and <paramref name="applyBaseline"/> is true) are excluded.
     /// </summary>
     public static List<Finding> GetFindings(string repositoryRoot, IEnumerable<string>? roots = null, IEnumerable<string>? changedFiles = null,
-        CodeReviewSettings? settings = null, bool applyBaseline = true, EntityCatalog? entityCatalog = null)
+        CodeReviewSettings? settings = null, bool applyBaseline = true, EntityCatalog? entityCatalog = null) =>
+        GetFindings(repositoryRoot, roots, changedFiles, settings, applyBaseline, entityCatalog, out _);
+
+    /// <summary>Returns the summary using the same call graph and repository context as the findings scan.</summary>
+    public static List<Finding> GetFindings(string repositoryRoot, IEnumerable<string>? roots, IEnumerable<string>? changedFiles,
+        CodeReviewSettings? settings, bool applyBaseline, EntityCatalog? entityCatalog, out List<ActionGroupSummary> actionGroupSummaries)
     {
         roots ??= CodeReviewPaths.ResolveRoots(repositoryRoot, ReviewScope.Both);
         settings ??= CodeReviewSettings.Load(repositoryRoot);
@@ -290,6 +295,10 @@ public static class CmFrameworkScanner
         Mark("dee analysis");
         var callGraph = CmCallGraphBuilder.BuildCallGraph(repositoryRoot, fileCache);
         Mark("call graph");
+
+        actionGroupSummaries = MasterDataActionGroupResolver.Summarize(
+            MasterDataActionGroupResolver.GetActionGroupMap(repositoryRoot), callGraph, serviceEndpointMap);
+        Mark("action group summary");
 
         // Await the reflection resolve started up front. If the parse phases above took longer than the
         // resolve (the common case on a real repo), this wait is ~0 -- the reflection cost is hidden.

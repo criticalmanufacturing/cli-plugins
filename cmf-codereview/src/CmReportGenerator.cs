@@ -84,7 +84,8 @@ public static class CmReportGenerator
     }
 
     /// <summary>Renders findings grouped by severity (Critical → High → Medium), with a code snippet and suggested fix per finding.</summary>
-    public static string BuildStandardReport(IReadOnlyList<Finding> findings, string title, string summary)
+    public static string BuildStandardReport(IReadOnlyList<Finding> findings, string title, string summary,
+        IReadOnlyList<ActionGroupSummary>? actionGroupSummaries = null, string? actionGroupContextNote = null)
     {
         var headers = new List<string>
         {
@@ -131,13 +132,15 @@ public static class CmReportGenerator
         var all = new List<string>();
         all.AddRange(headers);
         all.AddRange(body);
+        AppendActionGroupSummary(all, actionGroupSummaries, actionGroupContextNote);
         all.Add("---");
         all.Add("");
         return string.Join(Environment.NewLine, all);
     }
 
     /// <summary>Renders findings grouped by rule, with a rule summary table and full cross-reference/loop-exposure detail per finding.</summary>
-    public static string BuildDetailedReport(IReadOnlyList<Finding> findings, string title, string summary)
+    public static string BuildDetailedReport(IReadOnlyList<Finding> findings, string title, string summary,
+        IReadOnlyList<ActionGroupSummary>? actionGroupSummaries = null, string? actionGroupContextNote = null)
     {
         var lines = new List<string>
         {
@@ -207,6 +210,31 @@ public static class CmReportGenerator
 
         lines.Add("---");
         lines.Add("");
+        AppendActionGroupSummary(lines, actionGroupSummaries, actionGroupContextNote);
         return string.Join(Environment.NewLine, lines);
     }
+
+    private static void AppendActionGroupSummary(List<string> lines, IReadOnlyList<ActionGroupSummary>? summaries, string? contextNote)
+    {
+        if (summaries is null && contextNote is null) return;
+        lines.AddRange(new[] { "", "## Action Group Summary", "" });
+        if (contextNote is not null) lines.AddRange(new[] { contextNote, "" });
+        if (summaries is null) return;
+        lines.AddRange(new[] { "Counts include every MasterData-wired DEE, including DEEs without findings. Endpoints are possible static callers, not observed runtime traffic.", "" });
+        if (summaries.Count == 0)
+        {
+            lines.Add("No MasterData DEE wiring found.");
+            return;
+        }
+        lines.Add("| Action Group | DeeCount | RiskLevel | DEEs | Possible Service Endpoints |");
+        lines.Add("|---|---:|---|---|---|");
+        foreach (var item in summaries)
+        {
+            lines.Add($"| {SummaryCell(item.ActionGroup)} | {item.DeeCount} | {item.RiskLevel} | {SummaryCell(string.Join(", ", item.Dees))} | {SummaryCell(string.Join(", ", item.PossibleServiceEndpoints))} |");
+        }
+        lines.Add("");
+    }
+
+    private static string SummaryCell(string value) => System.Net.WebUtility.HtmlEncode(value)
+        .Replace("|", "&#124;").Replace("\r", " ").Replace("\n", " ");
 }

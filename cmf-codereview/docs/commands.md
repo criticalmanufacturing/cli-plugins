@@ -14,7 +14,7 @@ Runs the review engine over a repository and prints findings as a JSON array by 
 SARIF 2.1.0 log with `--report-format Sarif`. Optionally also saves the selected output to a file.
 
 ```bash
-cmf-codereview scan --repository-root <path> [--scope DEEs|Orchestration|Both] [--roots <rel1> <rel2> ...] [--output <file>] [--report-format Json|Sarif] [--changed-files-list <file>] [--fail-on Critical|High|Medium] [--update-baseline]
+cmf-codereview scan --repository-root <path> [--scope DEEs|Orchestration|Both] [--roots <rel1> <rel2> ...] [--output <file>] [--report-format Json|Sarif] [--include-action-group-summary] [--changed-files-list <file>] [--fail-on Critical|High|Medium] [--update-baseline]
 ```
 
 | Option | Required | Default | Description |
@@ -24,6 +24,7 @@ cmf-codereview scan --repository-root <path> [--scope DEEs|Orchestration|Both] [
 | `--roots` | No | (derived from `--scope`) | One or more explicit relative folders to scan instead of the `--scope` default. Accepts multiple values, e.g. `--roots Cmf.Custom.Data/Cmf.Custom.Data.Packages/DEEs Cmf.Custom.Business/Cmf.Custom.Common`. |
 | `--output` | No | (none — stdout only) | Path to also write findings in the selected format to disk. Parent directories are created automatically. |
 | `--report-format` | No | `Json` | `Json` (findings array) or `Sarif` (SARIF 2.1.0). Values are case-insensitive. The selected format applies to stdout and `--output`. |
+| `--include-action-group-summary` | No | `false` | JSON: write a `{ Findings, ActionGroupSummaries }` envelope instead of the legacy array. SARIF: include summaries in run properties. Applies to stdout and `--output`. |
 | `--changed-files-list` | No | (none — reports on every scanned file) | Path to a text file listing changed files, one relative or absolute path per line (e.g. the output of `git diff --name-only`). When given, only findings on those files are returned — but the whole repository is still analyzed for cross-reference and loop-exposure context, so a finding on a changed file caused by an unchanged caller elsewhere is still correctly reported. Intended for CI gates that should only comment on files actually touched by a change. |
 | `--fail-on` | No | (none — always exits `0`) | `Critical`, `High`, or `Medium`. When given, the command exits `1` if any reported finding is at or above this severity. Omit it to keep `scan` purely informational. |
 | `--update-baseline` | No | `false` | Write all current findings (ignoring any existing baseline) to `.codereview.baseline.json` at the repository root, accepting them as known debt — subsequent scans only report findings not in the baseline. Always exits `0` (ignores `--fail-on`). See [docs/configuration.md](configuration.md). |
@@ -116,7 +117,7 @@ cmf-codereview report --findings-path <file> [--repository-root <path>] [--repor
 | Option | Required | Default | Description |
 |---|---|---|---|
 | `--findings-path` | Yes | — | Path to a findings JSON file produced by `scan`. |
-| `--repository-root` | No | current directory | Used only to compute the default `--report-path` when `--report-path` is not given. Ignored when `--stdout` is set. |
+| `--repository-root` | No | current directory for output path only | Computes the default report path. When explicitly supplied, also resolves MasterData counts for findings files without a recorded summary, including with `--stdout`. This fallback does not rebuild a call graph. |
 | `--report-path` | No | `Tools/CodeReview/Reports/cm-framework-scan-<mode>-<timestamp>.<md\|html\|sarif>` under `--repository-root` | Output path for the report. The default file extension follows `--report-format`. Ignored when `--stdout` is set. |
 | `--report-mode` | No | `Standard` | `Standard` (severity-grouped) or `Detailed` (rule-grouped) report shape — see [docs/rules.md](rules.md#cross-reference-and-loop-exposure-context). |
 | `--report-format` | No | `Markdown` | `Markdown` (portable — for PR comments, plain viewers) or `Html` (a single self-contained page — no external assets, opens straight from disk — with a live text filter, collapsible severity-colored rule sections, and light/dark theming, for triaging findings in a browser). Markdown and HTML honour `--report-mode`; SARIF emits the same log for Standard and Detailed. `Sarif` produces machine-readable static analysis results. |
@@ -125,6 +126,13 @@ cmf-codereview report --findings-path <file> [--repository-root <path>] [--repor
 | `--stdout` | No | `false` | Print the report to stdout instead of writing a file — no file is created when this is set. Works for all report formats, including SARIF. Useful for piping the content elsewhere (e.g. into a pull request comment) without leaving a report artifact on disk. |
 
 Prints the resolved report path to stdout on success (or the report content itself, when `--stdout` is set).
+
+`report` accepts legacy arrays and enriched findings envelopes. Recorded summaries, including an
+empty summary, take precedence over the current repository. See [action-group-wiring.md](action-group-wiring.md).
+Legacy findings files do not retain the scan's call graph. Reports state that possible endpoints are
+unavailable; empty fallback lists are not evidence that a group has no callers. Use
+`scan --include-action-group-summary` or `review` to retain scan context. SARIF carries the same
+explanation in `runs[0].properties.actionGroupSummaryNote`.
 
 **Examples**
 
@@ -154,7 +162,7 @@ One-shot: runs `scan` and `report` together against a repository, so both the fi
 report are produced from a single command.
 
 ```bash
-cmf-codereview review --repository-root <path> [--scope DEEs|Orchestration|Both] [--roots <rel1> <rel2> ...] [--findings-path <file>] [--report-path <file>] [--report-mode Standard|Detailed] [--report-format Markdown|Html|Sarif] [--title <text>] [--summary <text>]
+cmf-codereview review --repository-root <path> [--scope DEEs|Orchestration|Both] [--roots <rel1> <rel2> ...] [--findings-path <file>] [--include-action-group-summary] [--report-path <file>] [--report-mode Standard|Detailed] [--report-format Markdown|Html|Sarif] [--title <text>] [--summary <text>]
 ```
 
 | Option | Required | Default | Description |
@@ -163,6 +171,7 @@ cmf-codereview review --repository-root <path> [--scope DEEs|Orchestration|Both]
 | `--scope` | No | `Both` | Same as `scan --scope`. |
 | `--roots` | No | (derived from `--scope`) | Same as `scan --roots`. |
 | `--findings-path` | No | `Tools/CodeReview/Reports/cm-framework-scan-<timestamp>.json` under `--repository-root` | Where to write the intermediate findings JSON. |
+| `--include-action-group-summary` | No | `false` | Save an enriched findings envelope for later reports. The immediate report always uses the scan's in-memory summary. |
 | `--report-path` | No | (see `report` command) | Output path for the report. |
 | `--report-mode` | No | `Standard` | Same as `report --report-mode`. |
 | `--report-format` | No | `Markdown` | Same as `report --report-format`. |

@@ -24,12 +24,14 @@ public static class CmSarifReportGenerator
         string.Join("/", path.Replace('\\', '/').Split('/').Select(Uri.EscapeDataString));
 
     /// <summary>Same signature as CmReportGenerator/CmHtmlReportGenerator so it slots into ReportCommand's switch. `title`/`summary` are accepted for signature parity but unused — SARIF has no concept of either.</summary>
-    public static string BuildStandardReport(IReadOnlyList<Finding> findings, string title, string summary) => Build(findings);
+    public static string BuildStandardReport(IReadOnlyList<Finding> findings, string title, string summary,
+        IReadOnlyList<ActionGroupSummary>? actionGroupSummaries = null, string? actionGroupContextNote = null) => Build(findings, actionGroupSummaries, actionGroupContextNote);
 
     /// <summary>SARIF has no rule-grouped/severity-grouped distinction like Markdown/Html do — Detailed renders identically to Standard.</summary>
-    public static string BuildDetailedReport(IReadOnlyList<Finding> findings, string title, string summary) => Build(findings);
+    public static string BuildDetailedReport(IReadOnlyList<Finding> findings, string title, string summary,
+        IReadOnlyList<ActionGroupSummary>? actionGroupSummaries = null, string? actionGroupContextNote = null) => Build(findings, actionGroupSummaries, actionGroupContextNote);
 
-    private static string Build(IReadOnlyList<Finding> findings)
+    private static string Build(IReadOnlyList<Finding> findings, IReadOnlyList<ActionGroupSummary>? actionGroupSummaries, string? contextNote)
     {
         var toolVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "0.0.0";
 
@@ -92,6 +94,14 @@ public static class CmSarifReportGenerator
                 })
         };
 
+        if (actionGroupSummaries is not null || contextNote is not null)
+        {
+            // Wiring risk is context, not an extra diagnostic or a finding severity.
+            var properties = new JsonObject();
+            if (actionGroupSummaries is not null) properties["actionGroupSummaries"] = JsonSerializer.SerializeToNode(actionGroupSummaries);
+            if (contextNote is not null) properties["actionGroupSummaryNote"] = contextNote;
+            sarif["runs"]![0]!["properties"] = properties;
+        }
         return sarif.ToJsonString(new JsonSerializerOptions { WriteIndented = true });
     }
 }
