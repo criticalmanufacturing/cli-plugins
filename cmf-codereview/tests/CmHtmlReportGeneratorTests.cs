@@ -126,7 +126,7 @@ public class CmHtmlReportGeneratorTests
     {
         var html = CmHtmlReportGenerator.BuildStandardReport(new List<Finding>(), "Title", "Summary");
 
-        Assert.Contains("<td colspan=\"6\">None</td>", html);
+        Assert.Contains("<td colspan=\"7\">None</td>", html);
     }
 
     [Fact]

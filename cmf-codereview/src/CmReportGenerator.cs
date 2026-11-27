@@ -104,13 +104,13 @@ public static class CmReportGenerator
 
             body.Add(sectionTitle);
             body.Add("");
-            body.Add("| File name and line numbers | Method / Endpoint | Endpoint Source | Cross-Reference | Description | Code snippet |");
-            body.Add("|---|---|---|---|---|---|");
+            body.Add("| File name and line numbers | Method / Endpoint | Endpoint Source | Cross-Reference | Action Groups | Description | Code snippet |");
+            body.Add("|---|---|---|---|---|---|---|");
 
             var group = findings.Where(f => f.Severity == severity).ToList();
             if (group.Count == 0)
             {
-                body.Add("| None | None | None | None | None | None |");
+                body.Add("| None | None | None | None | None | None | None |");
                 body.Add("");
                 continue;
             }
@@ -123,7 +123,7 @@ public static class CmReportGenerator
                 var crossReference = FormatCrossReference(finding.CrossReference);
                 var description = $"[{finding.Rule}] {finding.Description} Fix: {finding.SuggestedFix}";
                 var snippet = FormatSnippet(finding.Snippet);
-                body.Add($"| {location} | {context} | {endpointSource} | {crossReference} | {description} | {snippet} |");
+                body.Add($"| {location} | {context} | {endpointSource} | {crossReference} | {SummaryCell(string.Join(", ", finding.ActionGroups ?? []))} | {description} | {snippet} |");
             }
 
             body.Add("");
@@ -190,8 +190,8 @@ public static class CmReportGenerator
                 lines.Add("");
                 lines.Add(sample.SuggestedFix);
                 lines.Add("");
-                lines.Add("| File name and line numbers | Method / Endpoint | Endpoint Source | Cross-Reference | Description | Code snippet |");
-                lines.Add("|---|---|---|---|---|---|");
+                lines.Add("| File name and line numbers | Method / Endpoint | Endpoint Source | Cross-Reference | Action Groups | Description | Code snippet |");
+                lines.Add("|---|---|---|---|---|---|---|");
 
                 foreach (var finding in ruleGroup.OrderBy(f => f.RelativePath, StringComparer.Ordinal).ThenBy(f => f.LineNumber))
                 {
@@ -201,7 +201,7 @@ public static class CmReportGenerator
                     var crossReference = FormatCrossReference(finding.CrossReference);
                     var description = finding.Description;
                     var snippet = FormatSnippet(finding.Snippet);
-                    lines.Add($"| {location} | {context} | {endpointSource} | {crossReference} | {description} | {snippet} |");
+                    lines.Add($"| {location} | {context} | {endpointSource} | {crossReference} | {SummaryCell(string.Join(", ", finding.ActionGroups ?? []))} | {description} | {snippet} |");
                 }
 
                 lines.Add("");

@@ -298,8 +298,9 @@ public static class CmFrameworkScanner
 
         var (declaredTypeNames, declaredMethodNames) = MasterDataActionGroupResolver.CollectDeclaredNames(repositoryRoot, fileCache);
         Mark("declared type/method names");
+        var actionGroupMap = MasterDataActionGroupResolver.GetActionGroupMap(repositoryRoot, fileCache: fileCache);
         actionGroupSummaries = MasterDataActionGroupResolver.Summarize(
-            MasterDataActionGroupResolver.GetActionGroupMap(repositoryRoot, fileCache: fileCache), callGraph, serviceEndpointMap,
+            actionGroupMap, callGraph, serviceEndpointMap,
             declaredTypeNames, declaredMethodNames);
         Mark("action group summary");
 
@@ -336,7 +337,7 @@ public static class CmFrameworkScanner
         var findings = filesToReport
             .AsParallel().AsOrdered()
             .SelectMany(file => FindFileFindings(file, fileCache, callGraph, loopExposureCache, settings, baseline,
-                serviceEndpointMap, deeClassNameByFile, deeInvocationMap, orchestrationCallSitesInDees, activeRules, repositoryRoot, entityCatalog, processRuleRepository))
+                serviceEndpointMap, actionGroupMap, deeClassNameByFile, deeInvocationMap, orchestrationCallSitesInDees, activeRules, repositoryRoot, entityCatalog, processRuleRepository))
             .ToList();
         Mark("rule loop");
 
@@ -350,7 +351,8 @@ public static class CmFrameworkScanner
 
     private static List<Finding> FindFileFindings(string file, CodeReviewFileCache fileCache, MethodCallGraph callGraph,
         ConcurrentDictionary<string, LoopExposure?> loopExposureCache, CodeReviewSettings? settings, CodeReviewBaseline? baseline,
-        Dictionary<string, ServiceEndpointInfo> serviceEndpointMap, Dictionary<string, string> deeClassNameByFile,
+        Dictionary<string, ServiceEndpointInfo> serviceEndpointMap, Dictionary<string, List<ActionGroupInfo>> actionGroupMap,
+        Dictionary<string, string> deeClassNameByFile,
         Dictionary<string, List<DeeInvocationRecord>> deeInvocationMap, Dictionary<string, OrchestrationCallSite> orchestrationCallSitesInDees,
         IReadOnlyList<IReviewRule> activeRules, string repositoryRoot, EntityCatalog entityCatalog, ProcessRuleRepositoryContext processRuleRepository)
     {
@@ -361,9 +363,12 @@ public static class CmFrameworkScanner
             var context = RuleFileContext.Build(source, callGraph, loopExposureCache, entityCatalog, processRuleRepository);
 
             CrossReference? deeCrossReference = null;
+            List<ActionGroupInfo>? wiring = null;
             if (context.IsDeeFile)
             {
                 var deeClassNameForFile = deeClassNameByFile.TryGetValue(file, out var name) ? name : null;
+
+                if (deeClassNameForFile is not null) actionGroupMap.TryGetValue(deeClassNameForFile, out wiring);
 
                 if (deeClassNameForFile is not null && deeInvocationMap.TryGetValue(deeClassNameForFile, out var callers) && callers.Count > 0)
                 {
@@ -446,6 +451,8 @@ public static class CmFrameworkScanner
                         MethodName = methodName,
                         ServiceEndpoint = serviceEndpoint,
                         ServiceEndpointSource = serviceEndpointSource,
+                        ActionGroups = wiring?.Select(info => info.ActionGroup).ToList(),
+                        ActionGroupSources = wiring?.Select(info => info.SourceLocation).ToList(),
                         CrossReference = crossReference,
                         LoopExposure = loopExposure,
                         Escalation = match.Escalation

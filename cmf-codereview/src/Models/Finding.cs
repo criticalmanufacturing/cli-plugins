@@ -15,6 +15,8 @@ public class Finding
     public string? MethodName { get; init; }
     public string? ServiceEndpoint { get; init; }
     public string? ServiceEndpointSource { get; init; }
+    public IReadOnlyList<string>? ActionGroups { get; init; }
+    public IReadOnlyList<string>? ActionGroupSources { get; init; }
     public CrossReference? CrossReference { get; init; }
     public LoopExposure? LoopExposure { get; init; }
 

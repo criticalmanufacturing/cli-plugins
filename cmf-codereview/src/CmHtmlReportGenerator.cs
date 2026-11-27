@@ -16,7 +16,7 @@ public static class CmHtmlReportGenerator
 {
     private const string FindingTableHead =
         "<thead><tr><th>File name and line numbers</th><th>Method / Endpoint</th><th>Endpoint Source</th>" +
-        "<th>Cross-Reference</th><th>Description</th><th>Code snippet</th></tr></thead>";
+        "<th>Cross-Reference</th><th>Action Groups</th><th>Description</th><th>Code snippet</th></tr></thead>";
 
     /// <summary>HTML counterpart of <see cref="CmReportGenerator.BuildDetailedReport"/>: rule summary plus severity-grouped, collapsible per-rule sections.</summary>
     public static string BuildDetailedReport(IReadOnlyList<Finding> findings, string title, string summary,
@@ -115,7 +115,7 @@ public static class CmHtmlReportGenerator
             var group = findings.Where(f => f.Severity == severity).ToList();
             if (group.Count == 0)
             {
-                body.Append("<tr><td colspan=\"6\">None</td></tr>");
+                body.Append("<tr><td colspan=\"7\">None</td></tr>");
             }
             else
             {
@@ -168,7 +168,8 @@ public static class CmHtmlReportGenerator
           .Append("<td>").Append(Enc(context)).Append("</td>")
           .Append("<td>").Append(Enc(endpointSource)).Append("</td>")
           .Append("<td>").Append(Enc(crossReference)).Append("</td>")
-          .Append("<td>").Append(Enc(description)).Append("</td>")
+          .Append("<td>").Append(Enc(string.Join(", ", f.ActionGroups ?? []))).Append("</td>")
+           .Append("<td>").Append(Enc(description)).Append("</td>")
           .Append("<td class=\"code\"><code>").Append(Enc(f.Snippet.Trim())).Append("</code></td>")
           .Append("</tr>");
     }
