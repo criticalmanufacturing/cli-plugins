@@ -72,7 +72,8 @@ public class ReportCommand : BaseCommand
                 "Use scan --include-action-group-summary or review to retain scan context. Supplying --repository-root reconstructs wiring counts from current MasterData only.";
             if (!string.IsNullOrWhiteSpace(repositoryRoot))
             {
-                actionGroupSummaries = MasterDataActionGroupResolver.Summarize(MasterDataActionGroupResolver.GetActionGroupMap(repositoryRoot));
+                actionGroupSummaries = MasterDataActionGroupResolver.Summarize(MasterDataActionGroupResolver.GetActionGroupMap(repositoryRoot),
+                    nestedActionGroupEdges: NestedActionGroupCatalog.BuildEdgeMap(NestedActionGroupCatalog.LoadDefaults()));
             }
         }
 

@@ -14,5 +14,7 @@ public class ActionGroupSummary
     public IReadOnlyList<string> PossibleServiceEndpoints { get; init; } = new List<string>();
 
     /// <summary>Source-name evidence for Custom/Oob; Unknown when no declared-name index was supplied.</summary>
+    public IReadOnlyList<string> TriggeredActionGroups { get; init; } = new List<string>();
+
     public ActionGroupOrigin Origin { get; init; } = ActionGroupOrigin.Unknown;
 }
