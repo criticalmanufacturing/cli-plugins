@@ -199,3 +199,11 @@ the default outgoing edges for TrackOutMaterials. Blank/missing outer keys, null
 names are rejected. Cycles terminate through a visited set. Scan/review and legacy report reconstruction
 use these settings. Recorded enriched summaries stay authoritative and are not reinterpreted using
 later configuration. Confirm each edge against source before including it.
+
+## DEE references and deployment versions
+
+Use the normal `rules` dictionary to configure `DeeInvalidReference`, `DeeMissingReference`,
+`DeeReferenceUnresolved`, `DeploymentVersionMismatch`, and `DeploymentVersionUnresolved`.
+For example, `"DeeReferenceUnresolved": { "enabled": false }` disables only unresolved-reference
+review findings; it does not disable confirmed invalid or missing-reference findings.
+See [pr-validation.md](pr-validation.md) for the metadata and added-file inputs needed for validation.

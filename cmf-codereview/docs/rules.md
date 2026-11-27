@@ -380,3 +380,9 @@ locations, including across multiple MasterData roots.
 a recognized subsequent `GenerateSchema()` or `GenerateEntityTypeDBSchema(...)` on the update
 execution path. An earlier schema call, a different entity or a conditional schema call that does not
 cover the update cannot satisfy it. An existence guard returning before the update is supported.
+
+## DEE references and deployment versions
+
+The reference checks and PR deployment-folder diagnostics are described in
+[pr-validation.md](pr-validation.md), including their default severities, required metadata,
+historical-folder exclusions, and CLI/pipeline inputs.
