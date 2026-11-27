@@ -157,13 +157,22 @@ public static class MasterDataActionGroupResolver
         return (typeNames, methodNames);
     }
 
+    // Generic lifecycle names are insufficient evidence that an Action Group is custom.
+    // A genuine declared type still wins even when its method is one of these generic verbs.
+    private static readonly HashSet<string> GenericBaseMethodNames = new(StringComparer.Ordinal)
+    {
+        "Create", "CreateEntity", "CreateVersion", "Save", "Terminate", "Load", "TryLoad", "LoadRelations",
+        "RemoveRelations", "AddRelations", "AddRelatedRelations", "RemoveRelatedRelations", "ObjectExists",
+        "GetVersions", "Delete", "Clone", "ToString", "Equals", "GetHashCode", "GetType"
+    };
+
     private static ActionGroupOrigin ClassifyOrigin(string actionGroup,
         IReadOnlySet<string>? declaredTypeNames, IReadOnlySet<string>? declaredMethodNames)
     {
         if (declaredTypeNames is null) return ActionGroupOrigin.Unknown;
         var segments = actionGroup.Split('.');
         if (segments.Length >= 3 && declaredTypeNames.Contains(segments[^3])) return ActionGroupOrigin.Custom;
-        if (segments.Length >= 2 &&
+        if (segments.Length >= 2 && !GenericBaseMethodNames.Contains(segments[^2]) &&
             declaredMethodNames is not null && declaredMethodNames.Contains(segments[^2])) return ActionGroupOrigin.Custom;
         return ActionGroupOrigin.Oob;
     }

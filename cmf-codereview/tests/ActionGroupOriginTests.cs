@@ -110,6 +110,37 @@ public class ActionGroupOriginTests : IDisposable
         Assert.Contains("Replacement", MasterDataActionGroupResolver.CollectDeclaredNames(_fixture.Root).TypeNames);
     }
 
+    [Theory]
+    [InlineData("Create")]
+    [InlineData("Save")]
+    [InlineData("Terminate")]
+    [InlineData("Load")]
+    [InlineData("Delete")]
+    [InlineData("CreateEntity")]
+[InlineData("CreateVersion")]
+[InlineData("TryLoad")]
+[InlineData("LoadRelations")]
+[InlineData("RemoveRelations")]
+[InlineData("AddRelations")]
+[InlineData("AddRelatedRelations")]
+[InlineData("RemoveRelatedRelations")]
+[InlineData("ObjectExists")]
+[InlineData("GetVersions")]
+[InlineData("Clone")]
+[InlineData("ToString")]
+[InlineData("Equals")]
+[InlineData("GetHashCode")]
+[InlineData("GetType")]
+    public void LifecycleGuard_OnlyRestrictsMethodFallback(string verb)
+    {
+        var names = (new HashSet<string>(StringComparer.Ordinal) { "RealImplementation" },
+            new HashSet<string>(StringComparer.Ordinal) { verb, "CustomDistinctiveWork" });
+        var summaries = Summaries(names, $"Platform.UnrelatedType.{verb}.Post", $"Custom.RealImplementation.{verb}.Pre",
+            "Custom.RuntimeModule.CustomDistinctiveWork.Post");
+        Assert.Equal(ActionGroupOrigin.Oob, summaries.Single(summary => summary.ActionGroup.StartsWith("Platform.")).Origin);
+        Assert.All(summaries.Where(summary => summary.ActionGroup.StartsWith("Custom.")), summary => Assert.Equal(ActionGroupOrigin.Custom, summary.Origin));
+    }
+
     [Fact]
     public void AbsentNameIndex_IsUnknownAndEmptyIndexIsOob()
     {
