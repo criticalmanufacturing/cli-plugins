@@ -301,7 +301,7 @@ public static class CmFrameworkScanner
         var actionGroupMap = MasterDataActionGroupResolver.GetActionGroupMap(repositoryRoot, fileCache: fileCache);
         actionGroupSummaries = MasterDataActionGroupResolver.Summarize(
             actionGroupMap, callGraph, serviceEndpointMap,
-            declaredTypeNames, declaredMethodNames, NestedActionGroupCatalog.BuildEdgeMap(NestedActionGroupCatalog.LoadDefaults()));
+            declaredTypeNames, declaredMethodNames, NestedActionGroupCatalog.BuildEdgeMap(NestedActionGroupCatalog.LoadDefaults(), settings?.NestedActionGroups));
         Mark("action group summary");
 
         // Await the reflection resolve started up front. If the parse phases above took longer than the

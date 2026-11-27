@@ -2,6 +2,7 @@ using System.Text.Json;
 using Cmf.CLI.Utilities;
 using Cmf.Cli.Plugin.CodeReview.Enums;
 using Cmf.Cli.Plugin.CodeReview.Rules;
+using Cmf.Cli.Plugin.CodeReview.Models;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace Cmf.Cli.Plugin.CodeReview;
@@ -56,6 +57,7 @@ public class CodeReviewSettings
 
     public Dictionary<string, RuleSetting> Rules { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     public List<CustomRuleDefinition> CustomRules { get; set; } = new();
+    public List<NestedActionGroupEdge> NestedActionGroups { get; set; } = new();
 
     private static readonly JsonSerializerOptions SerializerOptions = new()
     {
@@ -171,6 +173,10 @@ public class CodeReviewSettings
 
     private void Validate(string path)
     {
+        if (NestedActionGroups is null || NestedActionGroups.Any(edge => edge is null ||
+            string.IsNullOrWhiteSpace(edge.Outer) || edge.Nested is null || edge.Nested.Any(string.IsNullOrWhiteSpace)))
+            throw new CliException($"{path}: nestedActionGroups requires a non-empty outer key and a nested list containing non-empty names.");
+
         // Force severity parsing up front so a bad value fails at load time with the file path, not mid-scan.
         foreach (var (ruleName, setting) in Rules)
         {

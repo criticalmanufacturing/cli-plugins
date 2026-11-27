@@ -73,7 +73,7 @@ public class ReportCommand : BaseCommand
             if (!string.IsNullOrWhiteSpace(repositoryRoot))
             {
                 actionGroupSummaries = MasterDataActionGroupResolver.Summarize(MasterDataActionGroupResolver.GetActionGroupMap(repositoryRoot),
-                    nestedActionGroupEdges: NestedActionGroupCatalog.BuildEdgeMap(NestedActionGroupCatalog.LoadDefaults()));
+                    nestedActionGroupEdges: NestedActionGroupCatalog.BuildEdgeMap(NestedActionGroupCatalog.LoadDefaults(), CodeReviewSettings.Load(repositoryRoot)?.NestedActionGroups));
             }
         }
 
