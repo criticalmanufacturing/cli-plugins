@@ -93,6 +93,12 @@ public sealed class ProcessRuleValidationRule : IReviewRule
 
                 var receiver = Receiver(call);
                 var type = syntax.TypeOf(receiver);
+                if (name == "AddProperties" && type is "IEntityType" or "EntityType")
+                {
+                    var target = Tokens(receiver);
+                    if (!syntax.HasFollowingCall(call, c => IsSchemaCall(c, target)))
+                        yield return SchemaMatch(call, target);
+                }
                 if (type is "ISmartTable" or "SmartTable" or "IGenericTable" or "GenericTable" &&
                     name is "LoadData" or "InsertOrUpdateRows" or "InsertRows" or "UpdateRows" or "DeleteRows")
                 {

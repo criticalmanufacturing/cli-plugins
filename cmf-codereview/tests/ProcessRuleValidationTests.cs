@@ -204,6 +204,32 @@ public class ProcessRuleValidationTests
     [InlineData("orchestration.GenerateEntityTypeDBSchema(new GenerateEntityTypeDBSchemaInput { EntityType = entityType });", false)]
     [InlineData("otherType.GenerateSchema();", true)]
     [InlineData("if (enabled) entityType.GenerateSchema();", true)]
+    [InlineData("return Input; entityType.GenerateSchema();", true)]
+    [InlineData("", true)]
+    public void AddProperties_RequiresFollowingSchemaOnTheSameTargetAndPath(string after, bool expected)
+    {
+        var matches = Review(AttributeSetup + "if (entityType.HasProperty(AttributeName)) return Input; entityType.AddProperties(properties);" + after);
+        var schema = matches.Where(m => m.RuleName == "ProcessRuleSchemaRegeneration").ToList();
+        Assert.Equal(expected, schema.Count != 0);
+        Assert.All(schema, m => Assert.Equal(Severity.High, m.Severity));
+    }
+
+    [Fact]
+    public void AddProperties_DoesNotBorrowEarlierSchemaOrFlagOtherTypes()
+    {
+        Assert.Contains(Review(AttributeSetup + "entityType.GenerateSchema(); entityType.AddProperties(properties);"),
+            m => m.RuleName == "ProcessRuleSchemaRegeneration");
+        Assert.DoesNotContain(Review("OtherType other = new OtherType(); other.AddProperties(properties);"),
+            m => m.RuleName == "ProcessRuleSchemaRegeneration");
+        Assert.DoesNotContain(Review(AttributeSetup + "if (entityType.HasProperty(AttributeName)) return Input;"),
+            m => m.RuleName == "ProcessRuleSchemaRegeneration");
+    }
+
+    [Theory]
+    [InlineData("entityType.GenerateSchema();", false)]
+    [InlineData("orchestration.GenerateEntityTypeDBSchema(new GenerateEntityTypeDBSchemaInput { EntityType = entityType });", false)]
+    [InlineData("otherType.GenerateSchema();", true)]
+    [InlineData("if (enabled) entityType.GenerateSchema();", true)]
     [InlineData("", true)]
     public void RawPropertyUpdate_RequiresSchemaForSameEntityOnSamePath(string after, bool expected)
     {
