@@ -212,7 +212,7 @@ reachability through compiled platform code. It retains the existing endpoint re
 `Cmf.Custom.Business/Cmf.Custom.Services` controller discovery limitation. Legacy report fallback
 without a scan graph leaves endpoint lists empty.
 
-This summary applies recognized Process Rule removals after JSON additions. Trace-span identifiers are not resolved by this summary.
+This summary applies recognized Process Rule removals after JSON additions. Trace identifiers preserve the exact Action Group name.
 Malformed/unreadable MasterData JSON is skipped with a warning on stderr; unrelated valid files
 still contribute wiring.
 
@@ -364,3 +364,10 @@ An absent catalog entry means no known edge, not proof of no nested activity.
 | `MaterialTransfer.Receive` | `Material.Receive`, `Material.Unship` |
 | `RejectMaterialTransfer` | `RejectMaterialTransfers` |
 | `RejectMaterialTransfers` | `MaterialTransferCollection.Reject` |
+
+### Runtime trace identifiers
+
+`ActionGroupSummary.DeeSpanName` is exactly `DEE::{ActionGroup}`, including its complete Pre/Post
+suffix. Pre and Post remain distinct: a transaction spans the Pre DEEs, the API operation and the
+Post DEEs, so either stage can extend its duration. Use the exact identifier for external correlation;
+static catalog or endpoint reachability alone does not prove that a span occurred at runtime.

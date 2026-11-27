@@ -6,6 +6,9 @@ namespace Cmf.Cli.Plugin.CodeReview.Models;
 public class ActionGroupSummary
 {
     public required string ActionGroup { get; init; }
+    /// <summary>Exact trace identifier, retaining the complete Pre/Post suffix.</summary>
+    public string DeeSpanName => $"DEE::{ActionGroup}";
+
     public required int DeeCount { get; init; }
     public required ActionGroupRiskLevel RiskLevel { get; init; }
     public required IReadOnlyList<string> Dees { get; init; }
