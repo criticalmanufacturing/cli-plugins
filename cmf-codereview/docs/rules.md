@@ -393,3 +393,10 @@ LoadRelations covers any reference. Filtering/ordering chains such as `collectio
 identity. Reassignment, aliasing, intervening calls/mutations, conditional preloads, local-function or
 lambda boundaries and unrecognized collection transformations retain the finding. The check does not
 follow values between methods or infer runtime state.
+
+ExcessiveLazyLoading suppresses an access only when its receiver type is resolved, its known base and
+interface hierarchy has no EntityBase/IEntityBase, and it exposes no LoadReference/LoadReferences/
+LoadRelations members. This covers DTOs with entity-shaped property names. Missing or ambiguous
+project/type metadata and unresolved base types retain the previous heuristic finding. Real entities
+and types exposing lazy-load APIs keep detection and the preload-before-loop check. The compilation
+is shared with DEE reference analysis and does not execute analyzed code.
