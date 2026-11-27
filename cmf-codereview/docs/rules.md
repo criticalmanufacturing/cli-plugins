@@ -400,3 +400,12 @@ LoadRelations members. This covers DTOs with entity-shaped property names. Missi
 project/type metadata and unresolved base types retain the previous heuristic finding. Real entities
 and types exposing lazy-load APIs keep detection and the preload-before-loop check. The compilation
 is shared with DEE reference analysis and does not execute analyzed code.
+
+### NativeValueInsteadOfProperty (Medium)
+
+For resolved platform Material, Product and Resource types (including their standard interfaces),
+`GetNativeValue<string>("Name")` can use `.Name`: the verified inherited EntityBase getter is a
+scalar native-value wrapper. Source-defined getter overrides must also prove that exact passthrough.
+Other attributes, unknown types, differing value types and relation/FK reads are excluded. Missing
+semantic context does not produce speculative guidance. The catalog is deliberately limited to these
+verified type/property combinations; it does not recommend typed navigation for foreign-key reads.

@@ -43,6 +43,14 @@ public enum EntityBulkCategory
 /// </summary>
 public sealed class EntityCatalog
 {
+    /// <summary>Platform types verified to inherit EntityBase.Name's scalar GetNativeValue&lt;string&gt; wrapper.</summary>
+    public static readonly IReadOnlySet<string> NativeNameWrapperTypes = new HashSet<string>(StringComparer.Ordinal)
+    {
+        "Cmf.Navigo.BusinessObjects.Material", "Cmf.Navigo.BusinessObjects.Product", "Cmf.Navigo.BusinessObjects.Resource",
+        "Cmf.Navigo.BusinessObjects.Abstractions.IMaterial", "Cmf.Navigo.BusinessObjects.Abstractions.IProduct",
+        "Cmf.Navigo.BusinessObjects.Abstractions.IResource"
+    };
+
     /// <summary>Entities whose CreateInstances is overridden to throw InvalidOperationCmfException even though their base category would otherwise allow bulk create.</summary>
     public static readonly HashSet<string> CreateDisabled = new(StringComparer.Ordinal)
         { "MaterialDeviation", "RecipeBody", "RecipeInstance", "ScheduleScenarioMessage", "MaterialLineStep" };
