@@ -54,7 +54,7 @@ Quick start — scan and report in one step:
 cmf-codereview review --repository-root <path>
 ```
 
-`cmf-codereview` has three commands: `scan`, `report`, and `review`. Every option, default, and example is
+`cmf-codereview` provides `scan`, `report`, `review`, and `pr-review`. Every option, default, and example is
 documented in [docs/commands.md](docs/commands.md) — start there for anything beyond the quick start above.
 `cmf-codereview --help` (and `<command> --help`) is also always available and reflects the current option set.
 
@@ -75,7 +75,7 @@ baseline (`scan --update-baseline`) so CI gates only fail on new findings. See
 ## Project layout
 
 - `src/` — the CLI executable, built on `Cmf.CLI.Core` (`BaseCommand`/`[CmfCommand]` discovery, same
-  as `cmf-dev`/`cmf-pipeline`), wiring `scan`/`report`/`review` under `Commands/`, plus the scanning
+  as `cmf-dev`/`cmf-pipeline`), wiring the CLI entry points under `Commands/`, plus the scanning
   engine it calls into: `Analysis/` (syntax-tree analyzers), `Rules/` (the rule engine, including the
   reflection-based `EntityCatalogResolver`), `Models/`, `Enums/`, and the report renderers
   (`CmReportGenerator.cs` for Markdown, `CmHtmlReportGenerator.cs` for HTML, and
