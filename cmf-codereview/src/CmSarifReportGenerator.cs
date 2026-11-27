@@ -69,6 +69,11 @@ public static class CmSarifReportGenerator
                 ["ruleId"] = f.Rule,
                 ["level"] = SarifLevel(f.Severity),
                 ["message"] = new JsonObject { ["text"] = $"{f.Description} Fix: {f.SuggestedFix}" },
+                ["properties"] = new JsonObject
+                {
+                    ["actionGroups"] = JsonSerializer.SerializeToNode(f.ActionGroups),
+                    ["actionGroupSources"] = JsonSerializer.SerializeToNode(f.ActionGroupSources)
+                },
                 ["locations"] = new JsonArray(new JsonObject { ["physicalLocation"] = physicalLocation })
             };
         }).ToArray();

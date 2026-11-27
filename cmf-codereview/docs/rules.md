@@ -212,8 +212,7 @@ reachability through compiled platform code. It retains the existing endpoint re
 `Cmf.Custom.Business/Cmf.Custom.Services` controller discovery limitation. Legacy report fallback
 without a scan graph leaves endpoint lists empty.
 
-This summary applies recognized Process Rule removals after JSON additions. Nested catalogs, per-finding Action Group
-fields and trace-span identifiers are not resolved by this summary.
+This summary applies recognized Process Rule removals after JSON additions. Nested catalogs and trace-span identifiers are not resolved by this summary.
 Malformed/unreadable MasterData JSON is skipped with a warning on stderr; unrelated valid files
 still contribute wiring.
 
@@ -270,3 +269,10 @@ Names must resolve to literals or literal local variables, with exactly one dist
 in the script. Ambiguous, helper-generated or dynamic names are outside this bounded analysis.
 Removal wins regardless of version order, including a subsequent JSON re-add; deployment history
 is not replayed. Ordinary DEEs outside ProcessRules are not removal sources.
+
+### Per-finding Action Groups
+
+DEE findings carry `ActionGroups` and `ActionGroupSources` lists. Corresponding indexes identify
+each group and its selected MasterData source. Markdown and HTML render all groups comma-joined;
+SARIF stores the lists in each result's properties. Unwired and non-DEE findings have null lists.
+The default findings file remains an array, with additive fields; consumers should tolerate new fields.

@@ -173,3 +173,10 @@ Those are the two supported kinds; a pattern that fits neither needs a code rule
 `docs/rules.md` and `IReviewRule`) — or ask for the kind to be added.
 
 Commit `.codereview.json` alongside the code so every teammate and CI run enforces the same rules.
+
+### Per-finding Action Groups
+
+DEE findings carry `ActionGroups` and `ActionGroupSources` lists. Corresponding indexes identify
+each group and its selected MasterData source. Markdown and HTML render all groups comma-joined;
+SARIF stores the lists in each result's properties. Unwired and non-DEE findings have null lists.
+The default findings file remains an array, with additive fields; consumers should tolerate new fields.
