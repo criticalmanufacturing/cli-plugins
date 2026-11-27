@@ -87,21 +87,29 @@ public sealed class DeeReferenceRule(DeeReferenceRepository repository) : IRevie
             foreach (var node in methods.SelectMany(m => m.DescendantNodes().OfType<SimpleNameSyntax>()))
             {
                 var symbol = model.GetSymbolInfo(node).Symbol;
-                var usedType = symbol as INamedTypeSymbol;
-                var extension = symbol as IMethodSymbol;
-                if (usedType?.TypeKind == TypeKind.Error || usedType?.IsAnonymousType == true || usedType?.ContainingNamespace?.IsGlobalNamespace == true) continue;
-                var ns = usedType?.ContainingNamespace?.ToDisplayString() ??
-                    (extension?.ReducedFrom is not null ? extension.ContainingNamespace.ToDisplayString() : null);
-                var assembly = usedType?.ContainingAssembly?.Name ??
-                    (extension?.ReducedFrom is not null ? extension.ContainingAssembly.Name : null);
-                var containingType = usedType ?? extension?.ContainingType;
+                var method = symbol as IMethodSymbol;
+                var usedType = symbol as INamedTypeSymbol ?? symbol switch
+                {
+                    IMethodSymbol member => member.ContainingType,
+                    IPropertySymbol member => member.ContainingType,
+                    IFieldSymbol member => member.ContainingType,
+                    IEventSymbol member => member.ContainingType,
+                    _ => null
+                };
+                if (usedType is null || usedType.TypeKind == TypeKind.Error || usedType.IsAnonymousType ||
+                    usedType.ContainingNamespace.IsGlobalNamespace) continue;
+                var ns = usedType.ContainingNamespace.ToDisplayString();
+                var assembly = usedType.ContainingAssembly?.Name;
+                var containingType = usedType;
+                var namespaceRequired = symbol is INamedTypeSymbol || method?.ReducedFrom is not null ||
+                    symbol?.IsStatic == true && !(node.Parent is MemberAccessExpressionSyntax memberAccess && memberAccess.Name == node);
                 var declarationTree = containingType?.DeclaringSyntaxReferences.FirstOrDefault()?.SyntaxTree;
                 if (declarationTree is not null && project.SourceAssemblies.TryGetValue(declarationTree, out var sourceAssembly)) assembly = sourceAssembly;
                 if (ns is null || assembly is null || ns.Length == 0) continue;
                 if (!project.AssemblyNamespaces.ContainsKey(assembly)) continue; // Source-only project types are not a proven deployable reference.
                 var qualified = node.Parent is QualifiedNameSyntax || node.Parent is AliasQualifiedNameSyntax ||
                     node.Parent is MemberAccessExpressionSyntax access && access.Name == node && model.GetSymbolInfo(access.Expression).Symbol is INamespaceSymbol;
-                var missingNamespace = !qualified && !imports.Contains(ns);
+                var missingNamespace = namespaceRequired && !qualified && !imports.Contains(ns);
                 var missingAssembly = !assemblies.Contains(assembly);
                 if (missingAssembly && containingType is not null)
                 {

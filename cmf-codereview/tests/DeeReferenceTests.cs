@@ -46,7 +46,7 @@ public sealed class DeeReferenceTests : IDisposable
             }
             """);
         Emit("Custom.Library", """
-            namespace Custom.Tools { public class Widget { } }
+            namespace Custom.Tools { public class Widget { } public static class Helpers { public static int Value = 1; public static int Property => 1; public static int Work() => 1; } }
             namespace Custom.Extensions { public static class Extensions { public static int Extra(this string value) => value.Length; } }
             """);
         File.WriteAllText(Path.Combine(_project, "Dees.csproj"), """
@@ -83,6 +83,20 @@ public sealed class DeeReferenceTests : IDisposable
             """);
         var context = RuleFileContext.Build(_cache.Get(_file), new(), new ConcurrentDictionary<string, LoopExposure?>(), EntityCatalog.Empty);
         return new DeeReferenceRule(new DeeReferenceRepository(_root, _cache)).FindMatches(context).ToList();
+    }
+
+    [Theory]
+    [InlineData("Work()", false)]
+    [InlineData("Value", false)]
+    [InlineData("Property", false)]
+    [InlineData("Work()", true)]
+    [InlineData("Value", true)]
+    [InlineData("Property", true)]
+    public void StaticImportedMembersRequireTheirContainingTypeReference(string expression, bool declared)
+    {
+        var body = (declared ? "UseReference(\"Custom.Library.dll\", \"Custom.Tools\"); " : "") + "var value = " + expression + ";";
+        var matches = Review(body, "using static Custom.Tools.Helpers;");
+        Assert.Equal(!declared, matches.Any(m => m.RuleName == "DeeMissingReference"));
     }
 
     [Fact]
