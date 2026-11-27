@@ -71,7 +71,7 @@ independent of Product packages and do not execute product assemblies.
 
 ## Added deployment content
 
-Pass **both** lists when scanning a PR:
+`pr-review` derives both lists from the Git diff. When using `scan` directly, pass **both** lists:
 
 ```bash
 cmf-codereview scan --repository-root . \

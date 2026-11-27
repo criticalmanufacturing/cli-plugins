@@ -1,11 +1,11 @@
 # Command Reference
 
-`cmf-codereview` has three subcommands: `scan`, `report`, and `review`. All of them are built with
+`cmf-codereview` provides `scan`, `report`, `review`, and `pr-review`. All of them are built with
 `System.CommandLine`, so `--help` is available on the root command and on every subcommand
 (`cmf-codereview --help`, `cmf-codereview scan --help`, etc.) and always reflects the current option set.
 
 Exit code is `0` on success and non-zero on any unhandled error (e.g. a missing required option, an
-invalid path, a malformed findings file), or when `scan --fail-on` is used and a qualifying finding exists
+invalid path, a malformed findings file), or when `scan` or `pr-review` is run with `--fail-on` and a qualifying finding exists
 (see below).
 
 ## `scan`
@@ -206,6 +206,28 @@ Scan and produce a Detailed, self-contained HTML report for browser triage:
 cmf-codereview review --repository-root C:\repos\YourProject --report-mode Detailed --report-format Html
 ```
 
+## `pr-review`
+
+Runs the Azure DevOps PR review from the repository checkout. Git fetches the target branch from
+`origin` and compares `HEAD` with the merge base. The scanner reports findings in changed files,
+using the full repository for analysis. The command posts a summary and inline comments for
+findings on added or modified lines. It recognizes fingerprints from previous reviews, including
+resolved threads and comments posted by the pipeline templates.
+
+```bash
+cmf-codereview pr-review --repository-root . --output findings.json --fail-on High
+```
+
+Use a checkout with full history (`fetchDepth: 0`) and credentials for `git fetch`
+(`persistCredentials: true`), and restore the solution before running the command. The command reads
+`SYSTEM_PULLREQUEST_TARGETBRANCH` and uses `SYSTEM_TEAMFOUNDATIONCOLLECTIONURI`, `SYSTEM_TEAMPROJECT`,
+`BUILD_REPOSITORY_ID`, and `SYSTEM_PULLREQUEST_PULLREQUESTID` when publishing. Map `$(System.AccessToken)`
+to `SYSTEM_ACCESSTOKEN` and grant the build identity permission to contribute to pull requests.
+
+`--output` optionally saves the findings JSON. `--fail-on` accepts `Critical`, `High`, or `Medium`.
+When the threshold is met anywhere in a changed file, the command writes the findings and exits `1`
+before posting comments. An omitted or empty threshold enables comment-only review.
+
 ## SARIF output
 
 Use SARIF 2.1.0 to exchange findings with compatible static analysis viewers:
@@ -251,7 +273,7 @@ See [pr-validation.md](pr-validation.md) for DEE reference rules, package-versio
 and the required Bash PR-Changes task edits. Historical folder versions are checked only for
 explicit added/renamed files; the reviewer does not infer additions from the changed-file list.
 
-## Choosing between the three commands
+## Choosing a command
 
 - Use **`review`** for everyday use — it's the one-command path from repository to report.
 - Use **`scan`** on its own when you want the raw findings JSON to feed into other tooling (a dashboard, a
@@ -260,6 +282,7 @@ explicit added/renamed files; the reviewer does not infer additions from the cha
 - Use **`report`** on its own to re-render a report (e.g. switch from Standard to Detailed, change the
   title, or get Markdown on stdout via `--stdout`) from a findings JSON you already have, without
   re-scanning the repository.
+- Use **`pr-review`** for changed-file analysis and inline comments in Azure DevOps PR builds.
 
 ## Example: gating a pull request without writing a report file
 
@@ -275,6 +298,5 @@ cmf-codereview report --findings-path findings.json --report-mode Detailed --std
 # REST API call, or an existing CLI/task for that), then propagate $scanExitCode as the step's exit code.
 ```
 
-This plugin does not post pull request comments itself (it has no knowledge of Azure DevOps, GitHub, or
-any other host) — that step belongs in your pipeline, using whatever mechanism your CI platform/toolchain
-already provides for commenting on a PR.
+This example produces Markdown for consumers that handle PR comments. For Azure DevOps inline
+comments, use `pr-review`.
