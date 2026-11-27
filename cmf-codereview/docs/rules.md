@@ -246,6 +246,14 @@ applies only to Origin evidence; normal rules still analyze Constants files.
 scanner calls the combined collector once. [Origin classification](origin-classification.md) explains
 the evidence and how to retain it in reports.
 
+**Excluding generic BusinessObject lifecycle verbs.** The method-fallback guard excludes
+`Create`, `CreateEntity`, `CreateVersion`, `Save`, `Terminate`, `Load`, `TryLoad`,
+`LoadRelations`, `RemoveRelations`, `AddRelations`, `AddRelatedRelations`, `RemoveRelatedRelations`,
+`ObjectExists`, `GetVersions`, `Delete`, `Clone`, `ToString`, `Equals`, `GetHashCode` and `GetType`.
+A coincidental `Create()` method on an unrelated factory is insufficient evidence for custom
+ownership. The guard restricts method-name fallback only: a genuine declared type remains `Custom`
+even when its method is a lifecycle verb.
+
 Findings inside DEE files carry a `CrossReference` back to the Orchestration call site that triggers them
 (`CalledByOrchestration`/`NoCallerFound`), and Orchestration findings that are triggered by a DEE call
 carry the reverse link (`CalledByDee`). Findings flagged via `LoopInducedByCaller` (or escalated for the
