@@ -375,3 +375,8 @@ static catalog or endpoint reachability alone does not prove that a span occurre
 MasterData files are parsed independently across available processors, then merged in the globally
 ordered version/path sequence. Parallel parsing preserves pair selection, stable findings and source
 locations, including across multiple MasterData roots.
+
+`ProcessRuleSchemaRegeneration` also checks `IEntityType.AddProperties(...)`. The same entity requires
+a recognized subsequent `GenerateSchema()` or `GenerateEntityTypeDBSchema(...)` on the update
+execution path. An earlier schema call, a different entity or a conditional schema call that does not
+cover the update cannot satisfy it. An existence guard returning before the update is supported.
