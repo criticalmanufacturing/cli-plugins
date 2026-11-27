@@ -10,6 +10,7 @@ namespace Cmf.Cli.Plugin.CodeReview.Rules;
 public class RuleFileContext
 {
     public required CompilationUnitSyntax Root { get; init; }
+    public DeeReferenceRepository? ReferenceRepository { get; init; }
     public string FilePath { get; init; } = "";
     public required IReadOnlyList<string> Lines { get; init; }
     public required LoopState LoopState { get; init; }
@@ -63,12 +64,12 @@ public class RuleFileContext
 
     /// <summary>Builds from a scan's shared per-file cache, reusing its parse and derived analyses instead of re-doing them.</summary>
     public static RuleFileContext Build(CachedSourceFile source, MethodCallGraph callGraph, ConcurrentDictionary<string, LoopExposure?> loopExposureCache, EntityCatalog entityCatalog,
-        ProcessRuleRepositoryContext? processRuleRepository = null) =>
-        Build(source.Root, source.Lines, source.LoopState, source.MethodRanges, source.Path, callGraph, loopExposureCache, entityCatalog, processRuleRepository);
+        ProcessRuleRepositoryContext? processRuleRepository = null, DeeReferenceRepository? referenceRepository = null) =>
+        Build(source.Root, source.Lines, source.LoopState, source.MethodRanges, source.Path, callGraph, loopExposureCache, entityCatalog, processRuleRepository, referenceRepository);
 
     private static RuleFileContext Build(CompilationUnitSyntax root, IReadOnlyList<string> lines, LoopState loopState, List<MethodRange> methodRanges,
         string file, MethodCallGraph callGraph, ConcurrentDictionary<string, LoopExposure?> loopExposureCache, EntityCatalog entityCatalog,
-        ProcessRuleRepositoryContext? processRuleRepository = null)
+        ProcessRuleRepositoryContext? processRuleRepository = null, DeeReferenceRepository? referenceRepository = null)
     {
         var isExtensionFile = CodeReviewPaths.IsExtensionFile(file);
         var isOrchestrationFile = CodeReviewPaths.IsOrchestrationFile(file);
@@ -86,6 +87,7 @@ public class RuleFileContext
         return new RuleFileContext
         {
             Root = root,
+            ReferenceRepository = referenceRepository,
             FilePath = file,
             Lines = lines,
             LoopState = loopState,

@@ -198,7 +198,8 @@ public static class CmFrameworkScanner
                 ((context.LoopState.Lines.Contains(line) && !context.LoopState.SingleExecutionLines.Contains(line)) ||
                  access.Ancestors().Any(a => a is LambdaExpressionSyntax or ArrowExpressionClauseSyntax)) &&
                 CmReceiverVariance.ReceiverVariesPerIteration(access) &&
-                !CmPreloadAnalyzer.IsPreloadedBeforeLoop(access)),
+                !CmPreloadAnalyzer.IsPreloadedBeforeLoop(access) &&
+                !CmSemanticAnalysis.IsResolvedNonEntity(context, access)),
         new ConfigGetConfigRule(),
         new GetConfigInsteadOfTryGetConfigRule(),
         new ConfigWriteInHotPathRule(),
@@ -239,7 +240,8 @@ public static class CmFrameworkScanner
         var fileCache = new CodeReviewFileCache();
         changedFiles = changedFiles?.ToArray();
         var customRules = settings?.BuildCustomRules();
-        var builtInRules = Rules.Concat(new IReviewRule[] { new DeeReferenceRule(new DeeReferenceRepository(repositoryRoot, fileCache)) }).ToList();
+        var referenceRepository = new DeeReferenceRepository(repositoryRoot, fileCache);
+        var builtInRules = Rules.Concat(new IReviewRule[] { new DeeReferenceRule(referenceRepository) }).ToList();
         var activeRules = customRules is { Count: > 0 } ? builtInRules.Concat(customRules).ToList() : builtInRules;
 
         var files = CodeReviewPaths.GetFiles(repositoryRoot, roots);
@@ -340,7 +342,7 @@ public static class CmFrameworkScanner
         var findings = filesToReport
             .AsParallel().AsOrdered()
             .SelectMany(file => FindFileFindings(file, fileCache, callGraph, loopExposureCache, settings, baseline,
-                serviceEndpointMap, actionGroupMap, deeClassNameByFile, deeInvocationMap, orchestrationCallSitesInDees, activeRules, repositoryRoot, entityCatalog, processRuleRepository))
+                serviceEndpointMap, actionGroupMap, deeClassNameByFile, deeInvocationMap, orchestrationCallSitesInDees, activeRules, repositoryRoot, entityCatalog, processRuleRepository, referenceRepository))
             .ToList();
         Mark("rule loop");
         if (addedFiles is not null)
@@ -359,13 +361,13 @@ public static class CmFrameworkScanner
         Dictionary<string, ServiceEndpointInfo> serviceEndpointMap, Dictionary<string, List<ActionGroupInfo>> actionGroupMap,
         Dictionary<string, string> deeClassNameByFile,
         Dictionary<string, List<DeeInvocationRecord>> deeInvocationMap, Dictionary<string, OrchestrationCallSite> orchestrationCallSitesInDees,
-        IReadOnlyList<IReviewRule> activeRules, string repositoryRoot, EntityCatalog entityCatalog, ProcessRuleRepositoryContext processRuleRepository)
+        IReadOnlyList<IReviewRule> activeRules, string repositoryRoot, EntityCatalog entityCatalog, ProcessRuleRepositoryContext processRuleRepository, DeeReferenceRepository referenceRepository)
     {
         var findings = new List<Finding>();
         {
             var source = fileCache.Get(file);
             var lines = source.Lines;
-            var context = RuleFileContext.Build(source, callGraph, loopExposureCache, entityCatalog, processRuleRepository);
+            var context = RuleFileContext.Build(source, callGraph, loopExposureCache, entityCatalog, processRuleRepository, referenceRepository);
 
             CrossReference? deeCrossReference = null;
             List<ActionGroupInfo>? wiring = null;
