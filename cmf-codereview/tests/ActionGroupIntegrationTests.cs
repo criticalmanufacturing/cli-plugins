@@ -124,6 +124,7 @@ public class ActionGroupIntegrationTests : IDisposable
         Assert.Contains("Custom.Type.First.Pre | 2 | Medium", report);
         Assert.Contains("FindingFreeDee", report);
         Assert.Contains("POST /items", report);
+        Assert.DoesNotContain("scan context was not recorded", report);
     }
 
     [Theory]
@@ -160,7 +161,44 @@ public class ActionGroupIntegrationTests : IDisposable
         var report = ReportCommand.BuildContent(path, ReportMode.Standard, ReportFormat.Markdown, "Review", "Summary", _fixture.Root);
         Assert.Contains("Custom.Type.First.Pre | 2 | Medium", report);
         Assert.DoesNotContain("POST /items", report);
-        Assert.DoesNotContain("Action Group Summary", ReportCommand.BuildContent(path, ReportMode.Standard, ReportFormat.Markdown, "Review", "Summary"));
+        Assert.Contains("Possible Service Endpoints are unavailable", ReportCommand.BuildContent(path, ReportMode.Standard, ReportFormat.Markdown, "Review", "Summary"));
+    }
+
+    [Theory]
+    [InlineData(ReportMode.Standard, ReportFormat.Markdown, false)]
+    [InlineData(ReportMode.Detailed, ReportFormat.Markdown, false)]
+    [InlineData(ReportMode.Standard, ReportFormat.Html, false)]
+    [InlineData(ReportMode.Detailed, ReportFormat.Html, false)]
+    [InlineData(ReportMode.Standard, ReportFormat.Sarif, false)]
+    [InlineData(ReportMode.Detailed, ReportFormat.Sarif, false)]
+    [InlineData(ReportMode.Standard, ReportFormat.Markdown, true)]
+    [InlineData(ReportMode.Detailed, ReportFormat.Markdown, true)]
+    [InlineData(ReportMode.Standard, ReportFormat.Html, true)]
+    [InlineData(ReportMode.Detailed, ReportFormat.Html, true)]
+    [InlineData(ReportMode.Standard, ReportFormat.Sarif, true)]
+    [InlineData(ReportMode.Detailed, ReportFormat.Sarif, true)]
+    public void DefaultScanReport_ExplainsUnavailableEndpointContext(ReportMode mode, ReportFormat format, bool supplyRepository)
+    {
+        var findings = CmFrameworkScanner.GetFindings(_fixture.Root, entityCatalog: TestEntities.Catalog);
+        var path = _fixture.Write("legacy.json", FindingsIo.Serialize(findings));
+        var report = ReportCommand.BuildContent(path, mode, format, "Review", "Summary", supplyRepository ? _fixture.Root : null);
+        Assert.Contains("Possible Service Endpoints are unavailable", report);
+        Assert.Contains("empty endpoint lists do not mean", report);
+        Assert.Contains("scan --include-action-group-summary", report);
+        Assert.Contains("LoadInsideLoop", report);
+        if (format == ReportFormat.Sarif)
+        {
+            using var doc = JsonDocument.Parse(report);
+            var run = doc.RootElement.GetProperty("runs")[0];
+            Assert.Single(run.GetProperty("results").EnumerateArray());
+            var properties = run.GetProperty("properties");
+            Assert.Contains("unavailable", properties.GetProperty("actionGroupSummaryNote").GetString());
+            if (supplyRepository)
+                Assert.All(properties.GetProperty("actionGroupSummaries").EnumerateArray(),
+                    summary => Assert.Empty(summary.GetProperty("PossibleServiceEndpoints").EnumerateArray()));
+            else
+                Assert.False(properties.TryGetProperty("actionGroupSummaries", out _));
+        }
     }
 
     [Fact]
@@ -170,6 +208,7 @@ public class ActionGroupIntegrationTests : IDisposable
         var report = ReportCommand.BuildContent(path, ReportMode.Standard, ReportFormat.Markdown, "Review", "Summary", _fixture.Root);
         Assert.Contains("No MasterData DEE wiring found.", report);
         Assert.DoesNotContain("Custom.Type.First.Pre", report);
+        Assert.DoesNotContain("scan context was not recorded", report);
     }
 
     [Fact]

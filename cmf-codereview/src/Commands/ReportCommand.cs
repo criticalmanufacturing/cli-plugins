@@ -65,19 +65,25 @@ public class ReportCommand : BaseCommand
         var findingsFile = FindingsIo.Deserialize(json);
         var findings = findingsFile.Findings;
         actionGroupSummaries ??= findingsFile.ActionGroupSummaries;
-        if (actionGroupSummaries is null && !string.IsNullOrWhiteSpace(repositoryRoot))
+        string? contextNote = null;
+        if (actionGroupSummaries is null)
         {
-            actionGroupSummaries = MasterDataActionGroupResolver.Summarize(MasterDataActionGroupResolver.GetActionGroupMap(repositoryRoot));
+            contextNote = "Action Group scan context was not recorded in this findings file. Possible Service Endpoints are unavailable; empty endpoint lists do not mean that no endpoint can reach a group. " +
+                "Use scan --include-action-group-summary or review to retain scan context. Supplying --repository-root reconstructs wiring counts from current MasterData only.";
+            if (!string.IsNullOrWhiteSpace(repositoryRoot))
+            {
+                actionGroupSummaries = MasterDataActionGroupResolver.Summarize(MasterDataActionGroupResolver.GetActionGroupMap(repositoryRoot));
+            }
         }
 
         return (reportMode, reportFormat) switch
         {
-            (ReportMode.Detailed, ReportFormat.Html) => CmHtmlReportGenerator.BuildDetailedReport(findings, title, summary, actionGroupSummaries),
-            (ReportMode.Detailed, ReportFormat.Sarif) => CmSarifReportGenerator.BuildDetailedReport(findings, title, summary, actionGroupSummaries),
-            (ReportMode.Detailed, _) => CmReportGenerator.BuildDetailedReport(findings, title, summary, actionGroupSummaries),
-            (_, ReportFormat.Html) => CmHtmlReportGenerator.BuildStandardReport(findings, title, summary, actionGroupSummaries),
-            (_, ReportFormat.Sarif) => CmSarifReportGenerator.BuildStandardReport(findings, title, summary, actionGroupSummaries),
-            _ => CmReportGenerator.BuildStandardReport(findings, title, summary, actionGroupSummaries)
+            (ReportMode.Detailed, ReportFormat.Html) => CmHtmlReportGenerator.BuildDetailedReport(findings, title, summary, actionGroupSummaries, contextNote),
+            (ReportMode.Detailed, ReportFormat.Sarif) => CmSarifReportGenerator.BuildDetailedReport(findings, title, summary, actionGroupSummaries, contextNote),
+            (ReportMode.Detailed, _) => CmReportGenerator.BuildDetailedReport(findings, title, summary, actionGroupSummaries, contextNote),
+            (_, ReportFormat.Html) => CmHtmlReportGenerator.BuildStandardReport(findings, title, summary, actionGroupSummaries, contextNote),
+            (_, ReportFormat.Sarif) => CmSarifReportGenerator.BuildStandardReport(findings, title, summary, actionGroupSummaries, contextNote),
+            _ => CmReportGenerator.BuildStandardReport(findings, title, summary, actionGroupSummaries, contextNote)
         };
     }
 

@@ -11,7 +11,7 @@ public static class MasterDataActionGroupResolver
     /// Accumulates every wiring. Only an exact repeated pair is replaced: the highest numeric version
     /// wins globally across roots, then the ordinally greatest repository-relative path for a tie.
     /// Optional roots allow callers to supply an explicit MasterData root set in any order.
-    /// Process Rule removal analysis is a separate migration step; only JSON additions are modeled here.
+    /// Only JSON additions are modeled; Process Rule removals are not resolved here.
     /// </summary>
     public static Dictionary<string, List<ActionGroupInfo>> GetActionGroupMap(
         string repositoryRoot, IEnumerable<string>? masterDataRoots = null)

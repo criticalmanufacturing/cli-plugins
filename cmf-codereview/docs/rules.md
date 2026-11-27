@@ -212,8 +212,8 @@ reachability through compiled platform code. It retains the existing endpoint re
 `Cmf.Custom.Business/Cmf.Custom.Services` controller discovery limitation. Legacy report fallback
 without a scan graph leaves endpoint lists empty. `Origin` remains `Unknown` in this foundation.
 
-This step models JSON additions. Process Rule removal analysis, origin classification, nested
-catalogs, per-finding Action Group fields and trace-span identifiers are separate migration stories.
+This summary models JSON additions. Process Rule removals, origin classification, nested catalogs,
+per-finding Action Group fields and trace-span identifiers are not resolved by this summary.
 Malformed/unreadable MasterData JSON is skipped with a warning on stderr; unrelated valid files
 still contribute wiring.
 

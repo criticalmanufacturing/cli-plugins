@@ -129,6 +129,10 @@ Prints the resolved report path to stdout on success (or the report content itse
 
 `report` accepts legacy arrays and enriched findings envelopes. Recorded summaries, including an
 empty summary, take precedence over the current repository. See [action-group-wiring.md](action-group-wiring.md).
+Legacy findings files do not retain the scan's call graph. Reports state that possible endpoints are
+unavailable; empty fallback lists are not evidence that a group has no callers. Use
+`scan --include-action-group-summary` or `review` to retain scan context. SARIF carries the same
+explanation in `runs[0].properties.actionGroupSummaryNote`.
 
 **Examples**
 

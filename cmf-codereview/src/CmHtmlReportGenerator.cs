@@ -20,7 +20,7 @@ public static class CmHtmlReportGenerator
 
     /// <summary>HTML counterpart of <see cref="CmReportGenerator.BuildDetailedReport"/>: rule summary plus severity-grouped, collapsible per-rule sections.</summary>
     public static string BuildDetailedReport(IReadOnlyList<Finding> findings, string title, string summary,
-        IReadOnlyList<ActionGroupSummary>? actionGroupSummaries = null)
+        IReadOnlyList<ActionGroupSummary>? actionGroupSummaries = null, string? actionGroupContextNote = null)
     {
         var pageTitle = $"Detailed Remediation Backlog — {title}";
         var body = new StringBuilder();
@@ -93,13 +93,13 @@ public static class CmHtmlReportGenerator
             }
         }
 
-        AppendActionGroupSummary(body, actionGroupSummaries);
+        AppendActionGroupSummary(body, actionGroupSummaries, actionGroupContextNote);
         return RenderPage(pageTitle, body.ToString());
     }
 
     /// <summary>HTML counterpart of <see cref="CmReportGenerator.BuildStandardReport"/>: one findings table per severity band.</summary>
     public static string BuildStandardReport(IReadOnlyList<Finding> findings, string title, string summary,
-        IReadOnlyList<ActionGroupSummary>? actionGroupSummaries = null)
+        IReadOnlyList<ActionGroupSummary>? actionGroupSummaries = null, string? actionGroupContextNote = null)
     {
         var body = new StringBuilder();
         body.Append("<h1>").Append(Enc(title)).Append("</h1>");
@@ -128,14 +128,17 @@ public static class CmHtmlReportGenerator
             body.Append("</tbody></table></div>");
         }
 
-        AppendActionGroupSummary(body, actionGroupSummaries);
+        AppendActionGroupSummary(body, actionGroupSummaries, actionGroupContextNote);
         return RenderPage(title, body.ToString());
     }
 
-    private static void AppendActionGroupSummary(StringBuilder body, IReadOnlyList<ActionGroupSummary>? summaries)
+    private static void AppendActionGroupSummary(StringBuilder body, IReadOnlyList<ActionGroupSummary>? summaries, string? contextNote)
     {
+        if (summaries is null && contextNote is null) return;
+        body.Append("<h2>Action Group Summary</h2>");
+        if (contextNote is not null) body.Append("<p class=\"summary-context\">").Append(Enc(contextNote)).Append("</p>");
         if (summaries is null) return;
-        body.Append("<h2>Action Group Summary</h2><p>Counts include every MasterData-wired DEE, including DEEs without findings. Endpoints are possible static callers, not observed runtime traffic.</p>");
+        body.Append("<p>Counts include every MasterData-wired DEE, including DEEs without findings. Endpoints are possible static callers, not observed runtime traffic.</p>");
         if (summaries.Count == 0)
         {
             body.Append("<p>No MasterData DEE wiring found.</p>");
