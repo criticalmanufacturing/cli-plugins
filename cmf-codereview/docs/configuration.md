@@ -180,3 +180,22 @@ DEE findings carry `ActionGroups` and `ActionGroupSources` lists. Corresponding 
 each group and its selected MasterData source. Markdown and HTML render all groups comma-joined;
 SARIF stores the lists in each result's properties. Unwired and non-DEE findings have null lists.
 The default findings file remains an array, with additive fields; consumers should tolerate new fields.
+
+### Nested Action Group catalog
+
+```json
+{
+  "nestedActionGroups": [
+    { "outer": "ComplexTrackOutMaterials", "nested": ["CustomAfterTrackOut"] },
+    { "outer": "CustomAfterTrackOut", "nested": ["CustomFinalize"] },
+    { "outer": "TrackOutMaterials", "nested": [] }
+  ]
+}
+```
+
+Each existing outer key is fully replaced, including an empty replacement; new keys extend the
+embedded defaults. The example replaces the complex track-out edges, adds a custom chain, and removes
+the default outgoing edges for TrackOutMaterials. Blank/missing outer keys, null lists and blank nested
+names are rejected. Cycles terminate through a visited set. Scan/review and legacy report reconstruction
+use these settings. Recorded enriched summaries stay authoritative and are not reinterpreted using
+later configuration. Confirm each edge against source before including it.
