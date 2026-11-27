@@ -84,6 +84,16 @@ public static class CodeReviewPaths
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .OrderBy(path => path, StringComparer.Ordinal).ToArray();
 
+    /// <summary>Existing DEE/Process Rule content roots; empty for repositories containing only MasterData.</summary>
+    public static string[] DiscoverDeeContentRoots(string repositoryRoot) =>
+        DiscoverDataPackageContent(repositoryRoot)
+            .Where(content => content.ContentType.Equals("DEE", StringComparison.OrdinalIgnoreCase) || IsProcessRuleContent(content.ContentType))
+            .Select(content => Path.Combine(content.Directory, ExtractLiteralDirectory(content.Source)))
+            .Where(Directory.Exists)
+            .Select(path => GetRelativePath(repositoryRoot, path))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(path => path, StringComparer.Ordinal).ToArray();
+
     private static ResolvedRoots Discover(string repositoryRoot)
     {
         var fullRoot = Path.GetFullPath(repositoryRoot);
