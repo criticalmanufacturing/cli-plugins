@@ -1,0 +1,377 @@
+[
+  {
+    "outer": "ComplexTrackOutMaterials",
+    "nested": ["TrackOutMaterials", "DataCollectionInstanceOrchestration.PerformImmediateDataCollection"],
+    "comment": "MaterialOrchestration_Processing.cs:12258 (calls TrackOutMaterials); :11969 (calls _dataCollectionInstanceOrchestration.PerformImmediateDataCollection)."
+  },
+  {
+    "outer": "TrackOutMaterials",
+    "nested": ["MaterialCollection.TrackOut"],
+    "comment": "MaterialOrchestration_Processing.cs:8657 -- wraps output.Materials.TrackOut(...)."
+  },
+  {
+    "outer": "MaterialCollection.TrackOut",
+    "nested": ["MaterialCollection.MoveToNextStep"],
+    "comment": "Material Collection Partial Classes/MaterialCollectionProcessing.cs:9338 -- TrackOut's own implementation creates a sub-materials collection and calls subMaterialsToHandle.MoveToNextStep(...)."
+  },
+  {
+    "outer": "ComplexTrackInMaterials",
+    "nested": ["TrackInMaterials", "DataCollectionInstanceOrchestration.PerformImmediateDataCollection", "DataCollectionInstanceOrchestration.OpenDataCollectionInstance"],
+    "comment": "MaterialOrchestration_Processing.cs:10371 (TrackInMaterials); :10650 (PerformImmediateDataCollection); :10700 (OpenDataCollectionInstance)."
+  },
+  {
+    "outer": "TrackInMaterials",
+    "nested": ["MaterialCollection.TrackIn"],
+    "comment": "MaterialOrchestration_Processing.cs:8382 -- wraps output.Materials.TrackIn(...)."
+  },
+  {
+    "outer": "MaterialCollection.TrackIn",
+    "nested": ["MaterialCollection.MoveToStep"],
+    "comment": "Material Collection Partial Classes/MaterialCollectionProcessing.cs:4925 -- TrackIn's own implementation creates 'subMaterialsToFakeMoveToStep' and calls .MoveToStep(...)."
+  },
+  {
+    "outer": "ComplexMoveMaterialsToNextStep",
+    "nested": ["MoveMaterialsToNextStep"],
+    "comment": "MaterialOrchestration_Processing.cs:9724."
+  },
+  {
+    "outer": "MoveMaterialsToNextStep",
+    "nested": ["MaterialCollection.MoveToNextStep"],
+    "comment": "MaterialOrchestration_Processing.cs:9338 -- wraps output.Materials.MoveToNextStep(...)."
+  },
+  {
+    "outer": "ComplexMoveMaterialToNextStep",
+    "nested": ["ComplexMoveMaterialsToNextStep"],
+    "comment": "MaterialOrchestration_Processing.cs:9503 -- singular overload delegates to the plural."
+  },
+  {
+    "outer": "MoveMaterialToNextStep",
+    "nested": ["MoveMaterialsToNextStep"],
+    "comment": "MaterialOrchestration_Processing.cs:9218 -- singular overload delegates to the plural."
+  },
+  {
+    "outer": "ComplexMoveMaterialToStep",
+    "nested": ["MoveMaterialToStep"],
+    "comment": "MaterialOrchestration_Processing.cs:10059."
+  },
+  {
+    "outer": "MoveMaterialToStep",
+    "nested": ["Material.MoveToStep"],
+    "comment": "MaterialOrchestration_Processing.cs:9899 -- wraps moveMaterialToStepOutput.Material.MoveToStep(...) (singular Material)."
+  },
+  {
+    "outer": "Material.MoveToStep",
+    "nested": ["MaterialCollection.MoveToStep"],
+    "comment": "Material Partial Classes/MaterialProcessing.cs:1473 -- builds a fresh IMaterialCollection and calls .MoveToStep(...) on it."
+  },
+  {
+    "outer": "ComplexTrackInMaterial",
+    "nested": ["ComplexTrackInMaterials"],
+    "comment": "MaterialOrchestration_Processing.cs:10171 -- singular overload delegates to the plural."
+  },
+  {
+    "outer": "ComplexTrackOutMaterial",
+    "nested": ["ComplexTrackOutMaterials"],
+    "comment": "MaterialOrchestration_Processing.cs:11162 -- singular overload delegates to the plural."
+  },
+  {
+    "outer": "ComplexTrackOutAndMoveMaterialToNextStep",
+    "nested": ["ComplexTrackOutMaterial", "MoveMaterialToNextStep"],
+    "comment": "MaterialOrchestration_Processing.cs:12760,12838 -- singular combo calls both."
+  },
+  {
+    "outer": "ComplexTrackOutAndMoveMaterialsToNextStep",
+    "nested": ["ComplexTrackOutMaterials", "ComplexMoveMaterialsToNextStep"],
+    "comment": "MaterialOrchestration_Processing.cs:13063,13430 -- plural combo calls both (5 Action Groups total once resolved transitively)."
+  },
+  {
+    "outer": "ComplexDispatchAndTrackInMaterial",
+    "nested": ["DispatchMaterial", "ComplexTrackInMaterial"],
+    "comment": "MaterialOrchestration_Processing.cs:13488,13543 -- singular combo calls both."
+  },
+  {
+    "outer": "ComplexDispatchAndTrackInMaterials",
+    "nested": ["DispatchMaterials", "ComplexTrackInMaterials"],
+    "comment": "MaterialOrchestration_Processing.cs:13701,13860 -- plural combo calls both."
+  },
+  {
+    "outer": "DispatchMaterial",
+    "nested": ["DispatchMaterials"],
+    "comment": "MaterialOrchestration_Processing.cs:1826 -- singular overload delegates to the plural."
+  },
+  {
+    "outer": "DispatchMaterials",
+    "nested": ["MaterialCollection.Dispatch"],
+    "comment": "MaterialOrchestration_Processing.cs:2030 -- wraps output.Materials.Dispatch(...)."
+  },
+  {
+    "outer": "ComplexReworkMaterial",
+    "nested": ["ComplexReworkMaterials"],
+    "comment": "MaterialOrchestration_Processing.cs:14315 -- singular overload delegates to the plural."
+  },
+  {
+    "outer": "ComplexReworkMaterials",
+    "nested": ["ReworkMaterials"],
+    "comment": "MaterialOrchestration_Processing.cs:14585."
+  },
+  {
+    "outer": "ReworkMaterials",
+    "nested": ["MaterialCollection.Rework"],
+    "comment": "MaterialOrchestration_Processing.cs:14199 -- wraps output.Materials.Rework(...)."
+  },
+  {
+    "outer": "MaterialCollection.Rework",
+    "nested": ["Material.RemoveFromLine"],
+    "comment": "Material Collection Partial Classes/MaterialCollectionProcessing.cs:10251 -- Rework's own implementation calls material.RemoveFromLine(...) per item."
+  },
+  {
+    "outer": "AbortMaterialProcess",
+    "nested": ["AbortMaterialsProcess"],
+    "comment": "MaterialOrchestration_Processing.cs:8876."
+  },
+  {
+    "outer": "AbortMaterialsProcess",
+    "nested": ["Materials.AbortProcess"],
+    "comment": "MaterialOrchestration_Processing.cs:9000 -- wraps output.Materials.AbortProcess(...)."
+  },
+  {
+    "outer": "PerformMaterialProcess",
+    "nested": ["PerformMaterialChecklistItems", "DataCollectionInstanceOrchestration.PostDataCollectionPoints"],
+    "comment": "MaterialOrchestration_Processing.cs:4080 (PerformMaterialChecklistItems); :4091,4096 (PostDataCollectionPoints)."
+  },
+  {
+    "outer": "PerformMaterialChecklistItems",
+    "nested": ["Material.PerformChecklistItemInstance"],
+    "comment": "MaterialOrchestration_Processing.cs:15014 -- wraps output.Material.PerformChecklistItemInstance(...)."
+  },
+  {
+    "outer": "ProcessMaterial",
+    "nested": ["DataCollectionInstanceOrchestration.PerformImmediateDataCollection"],
+    "comment": "MaterialOrchestration_Processing.cs:15614."
+  },
+  {
+    "outer": "RemoteAndLocalReceiveMaterials",
+    "nested": ["ReceiveMaterials", "RemoteReceiveMaterials"],
+    "comment": "MaterialOrchestration_Shipment.cs:463,479 -- calls both."
+  },
+  {
+    "outer": "ReceiveMaterials",
+    "nested": ["Materials.Receive"],
+    "comment": "MaterialOrchestration_Shipment.cs:317 -- wraps output.Materials.Receive(...)."
+  },
+  {
+    "outer": "RemoteReceiveMaterials",
+    "nested": ["Materials.RemoteReceive"],
+    "comment": "MaterialOrchestration_Shipment.cs:418 -- wraps output.Materials.RemoteReceive(...)."
+  },
+  {
+    "outer": "RequestRemoteAndLocalUnshipMaterials",
+    "nested": ["RequestRemoteUnshipMaterials", "UnshipMaterials"],
+    "comment": "MaterialOrchestration_Shipment.cs:660,676 -- calls both."
+  },
+  {
+    "outer": "RequestRemoteUnshipMaterials",
+    "nested": ["Materials.RequestRemoteUnship"],
+    "comment": "MaterialOrchestration_Shipment.cs:608 -- wraps output.Materials.RequestRemoteUnship(...)."
+  },
+  {
+    "outer": "UnshipMaterials",
+    "nested": ["Materials.Unship"],
+    "comment": "MaterialOrchestration_Shipment.cs:563 -- wraps output.Materials.Unship(...)."
+  },
+  {
+    "outer": "DetachAllMaterials",
+    "nested": ["DetachMaterials"],
+    "comment": "MaterialOrchestration_Submaterials.cs:572."
+  },
+  {
+    "outer": "DetachMaterials",
+    "nested": ["Material.RemoveSubMaterials"],
+    "comment": "MaterialOrchestration_Submaterials.cs:790 -- wraps output.Material.RemoveSubMaterials(...)."
+  },
+  {
+    "outer": "HoldMaterial",
+    "nested": ["HoldMaterials"],
+    "comment": "MaterialOrchestration.cs:3145."
+  },
+  {
+    "outer": "HoldMaterials",
+    "nested": ["Materials.Hold"],
+    "comment": "MaterialOrchestration.cs:3210 -- wraps output.Materials.Hold(...)."
+  },
+  {
+    "outer": "TerminateMaterial",
+    "nested": ["TerminateMaterials"],
+    "comment": "MaterialOrchestration.cs:1042."
+  },
+  {
+    "outer": "TerminateMaterials",
+    "nested": ["Materials.Terminate"],
+    "comment": "MaterialOrchestration.cs:1115 -- wraps output.Materials.Terminate(...)."
+  },
+  {
+    "outer": "SetOrUnSetMaterialsDispatchable",
+    "nested": ["SetOrUnSetMaterialDispatchable"],
+    "comment": "MaterialOrchestration_Processing.cs:14734."
+  },
+  {
+    "outer": "SetOrUnSetMaterialDispatchable",
+    "nested": ["Material.SetDispatchableFlag"],
+    "comment": "MaterialOrchestration_Processing.cs:14773 -- wraps output.Material.SetDispatchableFlag(...)."
+  },
+  {
+    "outer": "LinkMaterialWithMap",
+    "nested": ["LinkMaterialWithMaps"],
+    "comment": "MappingManagement/MappingOrchestration.cs:1502."
+  },
+  {
+    "outer": "LinkMaterialWithMaps",
+    "nested": ["Material.LinkMaterialWithMaps"],
+    "comment": "MappingManagement/MappingOrchestration.cs:1561 -- wraps material.LinkMaterialWithMaps(...)."
+  },
+  {
+    "outer": "ComplexPerformDataCollection",
+    "nested": ["PerformImmediateDataCollection"],
+    "comment": "EdcManagement/DataCollectionManagement/DataCollectionInstanceOrchestration.cs:767."
+  },
+  {
+    "outer": "PerformImmediateDataCollection",
+    "nested": ["DataCollectionInstance.PerformImmediate"],
+    "comment": "EdcManagement/DataCollectionManagement/DataCollectionInstanceOrchestration.cs:383 -- wraps output.DataCollectionInstance.PerformImmediate(...)."
+  },
+  {
+    "outer": "DataCollectionInstanceOrchestration.PerformImmediateDataCollection",
+    "nested": ["DataCollectionInstance.PerformImmediate"],
+    "comment": "Same target as the bare PerformImmediateDataCollection entry above -- kept as a separate key because the cross-class sweep's findings (ComplexTrackInMaterials/ComplexTrackOutMaterials/ComplexLogResourceEvent/PerformSetup/ProcessMaterial) reference this method with its ClassName.Method-prefixed form, which is a different dictionary key from the bare form EdcManagement's own ComplexPerformDataCollection entry uses -- without this bridging entry, the prefixed form was a dead-end leaf that never resolved to the terminal BO wrap (confirmed real bug: ComplexDispatchAndTrackInMaterials.Pre's TriggeredActionGroups included the intermediate DataCollectionInstanceOrchestration.PerformImmediateDataCollection node but silently dropped DataCollectionInstance.PerformImmediate)."
+  },
+  {
+    "outer": "DataCollectionInstanceOrchestration.PostDataCollectionPoints",
+    "nested": ["DataCollectionInstance.Post"],
+    "comment": "EdcManagement/DataCollectionManagement/DataCollectionInstanceOrchestration.cs:1045 -- wraps output.DataCollectionInstance.Post(...)."
+  },
+  {
+    "outer": "DataCollectionInstanceOrchestration.OpenDataCollectionInstance",
+    "nested": ["DataCollectionInstance.Open"],
+    "comment": "EdcManagement/DataCollectionManagement/DataCollectionInstanceOrchestration.cs:884 -- wraps output.DataCollectionInstance.Open(...)."
+  },
+  {
+    "outer": "ManageResourceEmployees",
+    "nested": ["SpecialCheckOutEmployees", "SpecialCheckInEmployees"],
+    "comment": "LaborManagement/LaborOrchestration.cs:956,967 -- calls both."
+  },
+  {
+    "outer": "SpecialCheckOutEmployees",
+    "nested": ["EmployeeCollection.SpecialCheckOut"],
+    "comment": "LaborManagement/LaborOrchestration.cs:872 -- wraps output.Employees.SpecialCheckOut(...)."
+  },
+  {
+    "outer": "SpecialCheckInEmployees",
+    "nested": ["EmployeeCollection.SpecialCheckIn"],
+    "comment": "LaborManagement/LaborOrchestration.cs:820 -- wraps output.Employees.SpecialCheckIn(...)."
+  },
+  {
+    "outer": "CheckOutTrainees",
+    "nested": ["SpecialCheckOutEmployees", "MaintenanceActivityOrderSpecialCheckOutEmployees"],
+    "comment": "LaborManagement/LaborOrchestration.cs:2720,2738 -- calls both."
+  },
+  {
+    "outer": "MaintenanceActivityOrderSpecialCheckOutEmployees",
+    "nested": ["EmployeeCollection.MaoSpecialCheckOut"],
+    "comment": "LaborManagement/LaborOrchestration.cs:2261 -- wraps output.Employees.MaoSpecialCheckOut(...)."
+  },
+  {
+    "outer": "ComplexLogResourceEvent",
+    "nested": ["LogResourceEvent", "DataCollectionInstanceOrchestration.PerformImmediateDataCollection"],
+    "comment": "ResourceManagement/ResourceOrchestration.cs:1631 (LogResourceEvent); :1723 (PerformImmediateDataCollection)."
+  },
+  {
+    "outer": "LogResourceEvent",
+    "nested": ["Resource.LogEvent"],
+    "comment": "ResourceManagement/ResourceOrchestration.cs:1608 -- wraps output.Resource.LogEvent(...)."
+  },
+  {
+    "outer": "Resource.LogEvent",
+    "nested": ["MaintenanceActivityOrderCollection.UpdateCounters"],
+    "comment": "Resource.cs:32929 -- LogEvent's own implementation creates a MaintenanceActivityOrderCollection and calls .UpdateCounters(...)."
+  },
+  {
+    "outer": "PerformSetup",
+    "nested": ["DataCollectionInstanceOrchestration.PerformImmediateDataCollection"],
+    "comment": "ResourceManagement/ResourceOrchestration.cs:5165."
+  },
+  {
+    "outer": "FullUpdateProtocol",
+    "nested": ["StateModelOrchestration.FullUpdateStateModel"],
+    "comment": "ExceptionManagement/ExceptionOrchestration.cs:341."
+  },
+  {
+    "outer": "StateModelOrchestration.FullUpdateStateModel",
+    "nested": ["StateModel.Save"],
+    "comment": "StateModels/StateModelOrchestration.cs:607 -- wraps output.StateModel.Save(false)."
+  },
+  {
+    "outer": "ApproveMaterialTransfer",
+    "nested": ["ApproveMaterialTransfers"],
+    "comment": "WarehouseManagement/WarehouseOrchestration.cs:92."
+  },
+  {
+    "outer": "ApproveMaterialTransfers",
+    "nested": ["MaterialTransferCollection.Approve"],
+    "comment": "WarehouseManagement/WarehouseOrchestration.cs:148 -- wraps output.MaterialTransfers.Approve(...)."
+  },
+  {
+    "outer": "MaterialTransferCollection.Approve",
+    "nested": ["MaterialTransfer.Send"],
+    "comment": "MaterialTransferCollection.cs:77,83 -- Approve's own implementation calls materialTransfer.Send(...) per item."
+  },
+  {
+    "outer": "CancelMaterialTransfer",
+    "nested": ["CancelMaterialTransfers"],
+    "comment": "WarehouseManagement/WarehouseOrchestration.cs:192."
+  },
+  {
+    "outer": "CancelMaterialTransfers",
+    "nested": ["MaterialTransferCollection.Cancel"],
+    "comment": "WarehouseManagement/WarehouseOrchestration.cs:247 -- wraps output.MaterialTransfers.Cancel(...)."
+  },
+  {
+    "outer": "MaterialTransferCollection.Cancel",
+    "nested": ["MaterialTransferCollection.InternalTerminate"],
+    "comment": "MaterialTransferCollection.cs:349 -- Cancel's own implementation delegates to its own InternalTerminate helper."
+  },
+  {
+    "outer": "MaterialTransferCollection.Reject",
+    "nested": ["MaterialTransferCollection.InternalTerminate"],
+    "comment": "MaterialTransferCollection.cs:412 -- Reject's own implementation delegates to its own InternalTerminate helper."
+  },
+  {
+    "outer": "MaterialTransferCollection.InternalTerminate",
+    "nested": ["MaterialTransferMaterialCollection.InternalTerminate", "MaterialCollection.Terminate"],
+    "comment": "MaterialTransferCollection.cs:115,129,130 -- calls materialTransfer.MaterialTransferMaterials.InternalTerminate(...) and matCol.Terminate(...)."
+  },
+  {
+    "outer": "ReceiveMaterialTransfer",
+    "nested": ["ReceiveMaterialTransfers"],
+    "comment": "WarehouseManagement/WarehouseOrchestration.cs:843."
+  },
+  {
+    "outer": "ReceiveMaterialTransfers",
+    "nested": ["MaterialTransfer.Receive"],
+    "comment": "WarehouseManagement/WarehouseOrchestration.cs:916 -- wraps a per-item materialTransfer.Receive(...) call."
+  },
+  {
+    "outer": "MaterialTransfer.Receive",
+    "nested": ["Material.Receive", "Material.Unship"],
+    "comment": "MaterialTransfer.cs:678,682 -- Receive's own implementation calls item.Material.Receive(...) and item.Material.Unship(...)."
+  },
+  {
+    "outer": "RejectMaterialTransfer",
+    "nested": ["RejectMaterialTransfers"],
+    "comment": "WarehouseManagement/WarehouseOrchestration.cs:957."
+  },
+  {
+    "outer": "RejectMaterialTransfers",
+    "nested": ["MaterialTransferCollection.Reject"],
+    "comment": "WarehouseManagement/WarehouseOrchestration.cs:1013 -- wraps output.MaterialTransfers.Reject(...)."
+  }
+]

@@ -104,7 +104,8 @@ public static class MasterDataActionGroupResolver
         MethodCallGraph? callGraph = null,
         IReadOnlyDictionary<string, ServiceEndpointInfo>? serviceEndpointMap = null,
         IReadOnlySet<string>? declaredTypeNames = null,
-        IReadOnlySet<string>? declaredMethodNames = null) =>
+        IReadOnlySet<string>? declaredMethodNames = null,
+        IReadOnlyDictionary<string, List<string>>? nestedActionGroupEdges = null) =>
         actionGroupMap.SelectMany(pair => pair.Value.Select(info => (Dee: pair.Key, Info: info)))
             .GroupBy(pair => pair.Info.ActionGroup, StringComparer.Ordinal)
             .Select(group =>
@@ -123,7 +124,9 @@ public static class MasterDataActionGroupResolver
                         _ => ActionGroupRiskLevel.Critical
                     },
                     PossibleServiceEndpoints = ResolveEndpoints(group.Key, callGraph, serviceEndpointMap),
-                    Origin = ClassifyOrigin(group.Key, declaredTypeNames, declaredMethodNames)
+                    Origin = ClassifyOrigin(group.Key, declaredTypeNames, declaredMethodNames),
+                    TriggeredActionGroups = nestedActionGroupEdges is not null && group.Key.Split('.') is { Length: >= 2 } segments
+                        ? NestedActionGroupCatalog.ResolveTransitiveTriggered(segments[^2], nestedActionGroupEdges) : new List<string>()
                 };
             })
             .OrderByDescending(summary => summary.DeeCount)

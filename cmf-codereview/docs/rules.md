@@ -212,7 +212,7 @@ reachability through compiled platform code. It retains the existing endpoint re
 `Cmf.Custom.Business/Cmf.Custom.Services` controller discovery limitation. Legacy report fallback
 without a scan graph leaves endpoint lists empty.
 
-This summary applies recognized Process Rule removals after JSON additions. Nested catalogs and trace-span identifiers are not resolved by this summary.
+This summary applies recognized Process Rule removals after JSON additions. Trace-span identifiers are not resolved by this summary.
 Malformed/unreadable MasterData JSON is skipped with a warning on stderr; unrelated valid files
 still contribute wiring.
 
@@ -276,3 +276,91 @@ DEE findings carry `ActionGroups` and `ActionGroupSources` lists. Corresponding 
 each group and its selected MasterData source. Markdown and HTML render all groups comma-joined;
 SARIF stores the lists in each result's properties. Unwired and non-DEE findings have null lists.
 The default findings file remains an array, with additive fields; consumers should tolerate new fields.
+
+### Also Triggers: curated nested Action Groups
+
+The embedded catalog contains 75 outer keys covering MaterialManagement, EdcManagement, LaborManagement,
+ResourceManagement, WarehouseManagement, ExceptionManagement, MappingManagement and BusinessObject chains.
+`TriggeredActionGroups` uses breadth-first traversal with a visited set, preserving direct-edge order and
+terminating cycles. It describes known candidate method names rather than runtime-observed executions.
+Prefixed orchestration names have explicit bridge entries so multi-hop data-collection chains reach
+their BusinessObject terminal. Markdown and HTML show Also Triggers; enriched JSON and SARIF retain it.
+An absent catalog entry means no known edge, not proof of no nested activity.
+
+| Outer method | Confirmed direct nested methods |
+|---|---|
+| `ComplexTrackOutMaterials` | `TrackOutMaterials`, `DataCollectionInstanceOrchestration.PerformImmediateDataCollection` |
+| `TrackOutMaterials` | `MaterialCollection.TrackOut` |
+| `MaterialCollection.TrackOut` | `MaterialCollection.MoveToNextStep` |
+| `ComplexTrackInMaterials` | `TrackInMaterials`, `DataCollectionInstanceOrchestration.PerformImmediateDataCollection`, `DataCollectionInstanceOrchestration.OpenDataCollectionInstance` |
+| `TrackInMaterials` | `MaterialCollection.TrackIn` |
+| `MaterialCollection.TrackIn` | `MaterialCollection.MoveToStep` |
+| `ComplexMoveMaterialsToNextStep` | `MoveMaterialsToNextStep` |
+| `MoveMaterialsToNextStep` | `MaterialCollection.MoveToNextStep` |
+| `ComplexMoveMaterialToNextStep` | `ComplexMoveMaterialsToNextStep` |
+| `MoveMaterialToNextStep` | `MoveMaterialsToNextStep` |
+| `ComplexMoveMaterialToStep` | `MoveMaterialToStep` |
+| `MoveMaterialToStep` | `Material.MoveToStep` |
+| `Material.MoveToStep` | `MaterialCollection.MoveToStep` |
+| `ComplexTrackInMaterial` | `ComplexTrackInMaterials` |
+| `ComplexTrackOutMaterial` | `ComplexTrackOutMaterials` |
+| `ComplexTrackOutAndMoveMaterialToNextStep` | `ComplexTrackOutMaterial`, `MoveMaterialToNextStep` |
+| `ComplexTrackOutAndMoveMaterialsToNextStep` | `ComplexTrackOutMaterials`, `ComplexMoveMaterialsToNextStep` |
+| `ComplexDispatchAndTrackInMaterial` | `DispatchMaterial`, `ComplexTrackInMaterial` |
+| `ComplexDispatchAndTrackInMaterials` | `DispatchMaterials`, `ComplexTrackInMaterials` |
+| `DispatchMaterial` | `DispatchMaterials` |
+| `DispatchMaterials` | `MaterialCollection.Dispatch` |
+| `ComplexReworkMaterial` | `ComplexReworkMaterials` |
+| `ComplexReworkMaterials` | `ReworkMaterials` |
+| `ReworkMaterials` | `MaterialCollection.Rework` |
+| `MaterialCollection.Rework` | `Material.RemoveFromLine` |
+| `AbortMaterialProcess` | `AbortMaterialsProcess` |
+| `AbortMaterialsProcess` | `Materials.AbortProcess` |
+| `PerformMaterialProcess` | `PerformMaterialChecklistItems`, `DataCollectionInstanceOrchestration.PostDataCollectionPoints` |
+| `PerformMaterialChecklistItems` | `Material.PerformChecklistItemInstance` |
+| `ProcessMaterial` | `DataCollectionInstanceOrchestration.PerformImmediateDataCollection` |
+| `RemoteAndLocalReceiveMaterials` | `ReceiveMaterials`, `RemoteReceiveMaterials` |
+| `ReceiveMaterials` | `Materials.Receive` |
+| `RemoteReceiveMaterials` | `Materials.RemoteReceive` |
+| `RequestRemoteAndLocalUnshipMaterials` | `RequestRemoteUnshipMaterials`, `UnshipMaterials` |
+| `RequestRemoteUnshipMaterials` | `Materials.RequestRemoteUnship` |
+| `UnshipMaterials` | `Materials.Unship` |
+| `DetachAllMaterials` | `DetachMaterials` |
+| `DetachMaterials` | `Material.RemoveSubMaterials` |
+| `HoldMaterial` | `HoldMaterials` |
+| `HoldMaterials` | `Materials.Hold` |
+| `TerminateMaterial` | `TerminateMaterials` |
+| `TerminateMaterials` | `Materials.Terminate` |
+| `SetOrUnSetMaterialsDispatchable` | `SetOrUnSetMaterialDispatchable` |
+| `SetOrUnSetMaterialDispatchable` | `Material.SetDispatchableFlag` |
+| `LinkMaterialWithMap` | `LinkMaterialWithMaps` |
+| `LinkMaterialWithMaps` | `Material.LinkMaterialWithMaps` |
+| `ComplexPerformDataCollection` | `PerformImmediateDataCollection` |
+| `PerformImmediateDataCollection` | `DataCollectionInstance.PerformImmediate` |
+| `DataCollectionInstanceOrchestration.PerformImmediateDataCollection` | `DataCollectionInstance.PerformImmediate` |
+| `DataCollectionInstanceOrchestration.PostDataCollectionPoints` | `DataCollectionInstance.Post` |
+| `DataCollectionInstanceOrchestration.OpenDataCollectionInstance` | `DataCollectionInstance.Open` |
+| `ManageResourceEmployees` | `SpecialCheckOutEmployees`, `SpecialCheckInEmployees` |
+| `SpecialCheckOutEmployees` | `EmployeeCollection.SpecialCheckOut` |
+| `SpecialCheckInEmployees` | `EmployeeCollection.SpecialCheckIn` |
+| `CheckOutTrainees` | `SpecialCheckOutEmployees`, `MaintenanceActivityOrderSpecialCheckOutEmployees` |
+| `MaintenanceActivityOrderSpecialCheckOutEmployees` | `EmployeeCollection.MaoSpecialCheckOut` |
+| `ComplexLogResourceEvent` | `LogResourceEvent`, `DataCollectionInstanceOrchestration.PerformImmediateDataCollection` |
+| `LogResourceEvent` | `Resource.LogEvent` |
+| `Resource.LogEvent` | `MaintenanceActivityOrderCollection.UpdateCounters` |
+| `PerformSetup` | `DataCollectionInstanceOrchestration.PerformImmediateDataCollection` |
+| `FullUpdateProtocol` | `StateModelOrchestration.FullUpdateStateModel` |
+| `StateModelOrchestration.FullUpdateStateModel` | `StateModel.Save` |
+| `ApproveMaterialTransfer` | `ApproveMaterialTransfers` |
+| `ApproveMaterialTransfers` | `MaterialTransferCollection.Approve` |
+| `MaterialTransferCollection.Approve` | `MaterialTransfer.Send` |
+| `CancelMaterialTransfer` | `CancelMaterialTransfers` |
+| `CancelMaterialTransfers` | `MaterialTransferCollection.Cancel` |
+| `MaterialTransferCollection.Cancel` | `MaterialTransferCollection.InternalTerminate` |
+| `MaterialTransferCollection.Reject` | `MaterialTransferCollection.InternalTerminate` |
+| `MaterialTransferCollection.InternalTerminate` | `MaterialTransferMaterialCollection.InternalTerminate`, `MaterialCollection.Terminate` |
+| `ReceiveMaterialTransfer` | `ReceiveMaterialTransfers` |
+| `ReceiveMaterialTransfers` | `MaterialTransfer.Receive` |
+| `MaterialTransfer.Receive` | `Material.Receive`, `Material.Unship` |
+| `RejectMaterialTransfer` | `RejectMaterialTransfers` |
+| `RejectMaterialTransfers` | `MaterialTransferCollection.Reject` |
